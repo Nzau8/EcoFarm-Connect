@@ -1,0 +1,16 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Logout - Connect{% endblock %}
+
+{% block content %}
+<div class="container text-center py-5">
+    <h2>Logout Confirmation</h2>
+    <p>Are you sure you want to logout?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Logout</button>
+        <a href="{% url 'connect:home' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %} 

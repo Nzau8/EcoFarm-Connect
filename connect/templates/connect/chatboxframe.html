@@ -1,0 +1,69 @@
+<div class="chatbox-frame position-fixed bottom-0 end-0 mb-3 me-3">
+    <div class="card shadow-lg" style="width: 350px;">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <span>Chat</span>
+        <button class="btn btn-sm btn-light" id="closeChatbox">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <div class="card-body chatbox-body overflow-auto" style="height: 300px;" id="chatboxBody">
+        <ul id="messageList" class="list-unstyled mb-0">
+          <!-- Messages will be appended dynamically -->
+        </ul>
+      </div>
+      <div class="card-footer">
+        <form id="chatForm">
+          <div class="input-group">
+            <input type="text" id="chatMessageInput" class="form-control" placeholder="Type a message..." required>
+            <button type="submit" class="btn btn-success">Send</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <style>
+    .chatbox-frame {
+      z-index: 1050;
+      display: none; /* Hidden by default */
+    }
+  </style>
+  
+  <script>
+    const chatFrame = document.querySelector('.chatbox-frame');
+    const closeChatbox = document.getElementById('closeChatbox');
+    const chatForm = document.getElementById('chatForm');
+    const chatMessageInput = document.getElementById('chatMessageInput');
+    const messageList = document.getElementById('messageList');
+  
+    // Toggle chatbox visibility
+    function toggleChatbox() {
+      chatFrame.style.display = chatFrame.style.display === 'none' ? 'block' : 'none';
+    }
+  
+    // Close chatbox
+    closeChatbox.addEventListener('click', () => {
+      chatFrame.style.display = 'none';
+    });
+  
+    // Handle message submission
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const message = chatMessageInput.value.trim();
+      if (message) {
+        // Simulate sending a message
+        const li = document.createElement('li');
+        li.className = 'text-end mb-2';
+        li.innerHTML = `
+          <span class="badge bg-secondary">You</span>
+          <p class="d-inline-block p-2 rounded bg-success text-white">${message}</p>
+        `;
+        messageList.appendChild(li);
+        chatMessageInput.value = '';
+        messageList.scrollTop = messageList.scrollHeight;
+  
+        // TODO: Implement WebSocket send logic here
+      }
+    });
+  </script>
+  

@@ -1,0 +1,23 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center text-success">Search Results</h1>
+
+    <!-- Search Query -->
+    <p>Showing results for: "{{ query }}"</p>
+
+    <!-- List of Discussions -->
+    <div class="list-group">
+        {% for discussion in discussions %}
+        <a href="{% url 'discussion_details' discussion.id %}" class="list-group-item list-group-item-action">
+            <h5>{{ discussion.title }}</h5>
+            <p>{{ discussion.description }}</p>
+            <span class="badge badge-primary">{{ discussion.tags.all|join:", " }}</span>
+        </a>
+        {% empty %}
+        <p>No discussions found for "{{ query }}".</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

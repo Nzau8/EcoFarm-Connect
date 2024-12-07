@@ -1,0 +1,86 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Create Discussion - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title mb-4">Start a New Discussion</h1>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.title.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.description.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.tags.id_for_label }}" class="form-label">Tags</label>
+                            {{ form.tags }}
+                            {% if form.tags.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.tags.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Select one or more tags that best describe your discussion.</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create Discussion</button>
+                            <a href="{% url 'connect:communityhome' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Style form inputs */
+    .form-control {
+        border-radius: 0.25rem;
+    }
+    
+    /* Style the tags selection */
+    select[multiple] {
+        height: 100px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center text-success">{{ profile_type }} Profile</h1>
+
+    <div class="profile-info">
+        <p><strong>Name:</strong> {{ profile_data.user.username }}</p>
+        <p><strong>Email:</strong> {{ profile_data.user.email }}</p>
+        {% if profile_type == 'Seller' %}
+            <p><strong>Company Name:</strong> {{ profile_data.company_name }}</p>
+            <p><strong>Location:</strong> {{ profile_data.location }}</p>
+            <p><strong>Phone:</strong> {{ profile_data.phone_number }}</p>
+            <a href="{% url 'editsellerprofile' %}" class="btn btn-success">Edit Profile</a>
+        {% elif profile_type == 'Buyer' %}
+            <p><strong>Address:</strong> {{ profile_data.address }}</p>
+            <p><strong>Phone:</strong> {{ profile_data.phone_number }}</p>
+            <a href="{% url 'editbuyerprofile' %}" class="btn btn-success">Edit Profile</a>
+        {% elif profile_type == 'Boda Rider' %}
+            <p><strong>Bike Model:</strong> {{ profile_data.bike_model }}</p>
+            <p><strong>License Number:</strong> {{ profile_data.license_number }}</p>
+            <p><strong>Location:</strong> {{ profile_data.location }}</p>
+            <p><strong>Phone:</strong> {{ profile_data.phone_number }}</p>
+            <a href="{% url 'editbodariderprofile' %}" class="btn btn-success">Edit Profile</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

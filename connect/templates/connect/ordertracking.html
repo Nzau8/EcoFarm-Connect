@@ -1,0 +1,319 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Track Order #{{ order.id }} - EcoFarm Connect{% endblock %}
+
+{% block content %}
+<div class="order-tracking-page">
+    <!-- Order Status Header -->
+    <section class="status-header glass-card">
+        <div class="container py-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h1 class="gradient-text mb-3">Order #{{ order.id }}</h1>
+                    <p class="lead mb-0">Placed on {{ order.created_at|date:"F d, Y" }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="status-badge status-{{ order.status|lower }}">
+                        {{ order.status }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Timeline -->
+    <section class="tracking-timeline py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="timeline-wrapper">
+                        <div class="timeline-item {% if order.status != 'Pending' %}completed{% endif %}">
+                            <div class="timeline-icon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3>Order Placed</h3>
+                                <p>Your order has been confirmed and is being processed</p>
+                                <span class="timeline-date">{{ order.created_at|date:"g:i A" }}</span>
+                            </div>
+                        </div>
+
+                        <div class="timeline-item {% if order.status == 'Processing' or order.status == 'Out for Delivery' or order.status == 'Delivered' %}completed{% endif %}">
+                            <div class="timeline-icon">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3>Processing</h3>
+                                <p>Seller is preparing your items for delivery</p>
+                                {% if order.processing_time %}
+                                    <span class="timeline-date">{{ order.processing_time|date:"g:i A" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="timeline-item {% if order.status == 'Out for Delivery' or order.status == 'Delivered' %}completed{% endif %}">
+                            <div class="timeline-icon">
+                                <i class="bi bi-bicycle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3>Out for Delivery</h3>
+                                {% if order.assigned_delivery_person %}
+                                    <p>Your order is being delivered by {{ order.assigned_delivery_person.name }}</p>
+                                {% else %}
+                                    <p>Rider will be assigned soon</p>
+                                {% endif %}
+                                {% if order.out_for_delivery_time %}
+                                    <span class="timeline-date">{{ order.out_for_delivery_time|date:"g:i A" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="timeline-item {% if order.status == 'Delivered' %}completed{% endif %}">
+                            <div class="timeline-icon">
+                                <i class="bi bi-house-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h3>Delivered</h3>
+                                <p>Order has been delivered successfully</p>
+                                {% if order.delivery_time %}
+                                    <span class="timeline-date">{{ order.delivery_time|date:"g:i A" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Details Sidebar -->
+                <div class="col-lg-4">
+                    <div class="order-details-card">
+                        <h2 class="card-title">Order Details</h2>
+                        <div class="order-items">
+                            {% for item in order.orderitem_set.all %}
+                            <div class="order-item">
+                                <div class="item-image">
+                                    {% if item.product.image %}
+                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                    {% else %}
+                                        <div class="placeholder-image">
+                                            <i class="bi bi-image"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="item-details">
+                                    <h4>{{ item.product.name }}</h4>
+                                    <p>Quantity: {{ item.quantity }}</p>
+                                    <p class="price">KES {{ item.product.price|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="order-summary">
+                            <div class="summary-item">
+                                <span>Subtotal</span>
+                                <span>KES {{ order.total_price|floatformat:2 }}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span>Delivery Fee</span>
+                                <span>KES {{ order.delivery_fee|default:"0.00" }}</span>
+                            </div>
+                            <div class="summary-item total">
+                                <span>Total</span>
+                                <span>KES {{ order.total_price|add:order.delivery_fee|default:order.total_price|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        {% if order.delivery_address %}
+                        <div class="delivery-info">
+                            <h3>Delivery Address</h3>
+                            <p>{{ order.delivery_address }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-tracking-page {
+        background-color: var(--body-bg);
+    }
+
+    .status-header {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(33, 136, 56, 0.1) 100%);
+        margin-bottom: 2rem;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 0.5rem 1.5rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+    }
+
+    .status-pending {
+        background-color: #ffc107;
+        color: #000;
+    }
+
+    .status-processing {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .status-out-for-delivery {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .status-delivered {
+        background-color: #28a745;
+        color: white;
+    }
+
+    /* Timeline Styles */
+    .timeline-wrapper {
+        position: relative;
+        padding: 2rem 0;
+    }
+
+    .timeline-wrapper::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 1rem;
+        height: 100%;
+        width: 2px;
+        background-color: #e9ecef;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 3rem;
+        margin-bottom: 2rem;
+    }
+
+    .timeline-icon {
+        position: absolute;
+        left: 0;
+        width: 2rem;
+        height: 2rem;
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+    }
+
+    .timeline-item.completed .timeline-icon {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    .timeline-content {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .timeline-content h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .timeline-date {
+        color: var(--secondary);
+        font-size: 0.875rem;
+    }
+
+    /* Order Details Card */
+    .order-details-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        margin-right: 1rem;
+    }
+
+    .item-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .placeholder-image {
+        width: 100%;
+        height: 100%;
+        background: #f8f9fa;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+    }
+
+    .order-summary {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-item.total {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 2px solid #e9ecef;
+    }
+
+    .delivery-info {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    @media (max-width: 768px) {
+        .timeline-wrapper::before {
+            left: 0.75rem;
+        }
+        
+        .timeline-item {
+            padding-left: 2.5rem;
+        }
+        
+        .timeline-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Add Product - Connect{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Add a New Product</h3>
+  <p>Fill out the details below to list your product in the marketplace.</p>
+
+  <!-- Add Product Form -->
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group mb-3">
+      <label for="name">Product Name:</label>
+      <input type="text" id="name" name="name" class="form-control" placeholder="Enter product name" required>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="description">Description:</label>
+      <textarea id="description" name="description" class="form-control" rows="4" placeholder="Write a detailed description" required></textarea>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="price">Price ($):</label>
+      <input type="number" id="price" name="price" class="form-control" placeholder="Enter price" step="0.01" required>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="category">Category:</label>
+      <select id="category" name="category" class="form-control" required>
+        {% for category in categories %}
+        <option value="{{ category.id }}">{{ category.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="tags">Tags (comma-separated):</label>
+      <input type="text" id="tags" name="tags" class="form-control" placeholder="e.g., organic, vegetables, fresh">
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="stock">Stock Quantity:</label>
+      <input type="number" id="stock" name="stock" class="form-control" placeholder="Enter available stock" required>
+    </div>
+
+    <div class="form-group mb-3">
+      <label for="images">Upload Product Images:</label>
+      <input type="file" id="images" name="images" class="form-control" multiple accept="image/*">
+      <small class="text-muted">You can upload up to 5 images.</small>
+    </div>
+
+    <button type="submit" class="btn btn-success">Add Product</button>
+  </form>
+</div>
+{% endblock %}

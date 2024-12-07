@@ -1,0 +1,170 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Boda Rider Dashboard - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Earnings Summary -->
+        <div class="col-md-4">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h5>Total Earnings</h5>
+                </div>
+                <div class="card-body">
+                    <h2 class="dashboard-stat">KES {{ total_earnings|floatformat:2 }}</h2>
+                    <div class="earnings-breakdown">
+                        <div class="earning-item">
+                            <span>Pending Payment:</span>
+                            <span>KES {{ pending_earnings|floatformat:2 }}</span>
+                        </div>
+                        <div class="earning-item">
+                            <span>Paid:</span>
+                            <span>KES {{ paid_earnings|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    <div class="earning-actions mt-3">
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#withdrawModal">
+                            <i class="bi bi-cash"></i> Withdraw Earnings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Stats -->
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="dashboard-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-bicycle"></i>
+                        </div>
+                        <h3>{{ total_deliveries }}</h3>
+                        <p>Total Deliveries</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dashboard-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <h3>{{ pending_deliveries }}</h3>
+                        <p>Pending Deliveries</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="dashboard-card">
+                        <div class="stat-icon">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <h3>{{ completed_deliveries }}</h3>
+                        <p>Completed Deliveries</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Earnings -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Recent Earnings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for earning in recent_earnings %}
+                                <tr>
+                                    <td>#{{ earning.order.id }}</td>
+                                    <td>{{ earning.created_at|date:"M d, Y" }}</td>
+                                    <td>KES {{ earning.amount|floatformat:2 }}</td>
+                                    <td>
+                                        {% if earning.paid %}
+                                            <span class="badge bg-success">Paid</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div class="modal fade" id="withdrawModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Withdraw Earnings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="withdrawForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Amount to Withdraw</label>
+                        <input type="number" class="form-control" name="amount" 
+                               max="{{ pending_earnings }}" required>
+                        <div class="form-text">Available: KES {{ pending_earnings|floatformat:2 }}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">M-Pesa Phone Number</label>
+                        <input type="tel" class="form-control" name="phone_number" 
+                               value="{{ bodarider.phone_number }}" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        Withdraw to M-Pesa
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('withdrawForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch("{% url 'connect:withdraw_earnings' %}", {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            $('#withdrawModal').modal('hide');
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error processing request');
+        console.error('Error:', error);
+    });
+});
+</script>
+{% endblock %} 

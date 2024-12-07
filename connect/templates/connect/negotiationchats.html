@@ -1,0 +1,84 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Negotiation Chat</h3>
+  <div class="card">
+    <!-- Product Details -->
+    <div class="card-header bg-success text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0">{{ product.name }}</h5>
+          <small>Price: {{ product.price }} per unit</small>
+        </div>
+        <a href="{{ product.get_absolute_url }}" class="btn btn-light btn-sm">View Product</a>
+      </div>
+    </div>
+
+    <!-- Chat Body -->
+    <div class="card-body chatbox-body" id="negotiationChatBody" style="height: 400px; overflow-y: auto;">
+      <ul id="messageList" class="list-unstyled">
+        {% for message in messages %}
+        <li class="mb-2 {% if message.sender == request.user %}text-end{% else %}text-start{% endif %}">
+          <span class="badge bg-secondary">{{ message.sender.username }}</span>
+          <p class="d-inline-block p-2 rounded {% if message.sender == request.user %}bg-success text-white{% else %}bg-light{% endif %}">
+            {{ message.text }}
+          </p>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Chat Footer -->
+    <div class="card-footer">
+      <form id="negotiationChatForm">
+        <div class="input-group">
+          <input type="text" id="chatMessageInput" class="form-control" placeholder="Type your message..." required>
+          <button type="submit" class="btn btn-success">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const chatSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/negotiation/{{ chat_room }}/'
+  );
+
+  const messageInput = document.getElementById('chatMessageInput');
+  const chatForm = document.getElementById('negotiationChatForm');
+  const messageList = document.getElementById('messageList');
+
+  // Listen for incoming messages
+  chatSocket.onmessage = function (e) {
+    const data = JSON.parse(e.data);
+    const li = document.createElement('li');
+    li.className = "mb-2 text-start";
+    if (data.sender === "{{ request.user.username }}") {
+      li.className = "mb-2 text-end";
+    }
+    li.innerHTML = `
+      <span class="badge bg-secondary">${data.sender}</span>
+      <p class="d-inline-block p-2 rounded bg-light">${data.message}</p>
+    `;
+    messageList.appendChild(li);
+    messageList.scrollTop = messageList.scrollHeight;
+  };
+
+  // Handle message sending
+  chatForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const message = messageInput.value;
+    chatSocket.send(JSON.stringify({
+      'message': message,
+      'sender': "{{ request.user.username }}"
+    }));
+    messageInput.value = '';
+  });
+
+  // Handle connection closure
+  chatSocket.onclose = function (e) {
+    console.error('Negotiation chat socket closed unexpectedly');
+  };
+</script>
+{% endblock %}

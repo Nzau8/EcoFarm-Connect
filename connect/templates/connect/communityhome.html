@@ -1,0 +1,71 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Community - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Community Forum</h1>
+        {% if user.is_authenticated %}
+            <a href="{% url 'connect:creatediscussion' %}" class="btn btn-primary">Start Discussion</a>
+        {% endif %}
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form class="d-flex" method="get">
+                <input class="form-control me-2" type="search" placeholder="Search discussions..." name="query" value="{{ request.GET.query }}">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" name="tag" onchange="this.form.submit()">
+                <option value="">All Tags</option>
+                {% for tag in tags %}
+                    <option value="{{ tag.name }}" {% if tag_filter == tag.name %}selected{% endif %}>
+                        {{ tag.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Discussions List -->
+    <div class="card">
+        <div class="card-body">
+            {% if discussions %}
+                {% for discussion in discussions %}
+                <div class="discussion-item mb-4">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h3 class="h5 mb-1">
+                                <a href="{% url 'connect:discussiondetails' discussion.id %}" class="text-decoration-none">
+                                    {{ discussion.title }}
+                                </a>
+                            </h3>
+                            <p class="text-muted mb-2">
+                                Started by {{ discussion.user.username }} on {{ discussion.created_at|date:"M d, Y" }}
+                            </p>
+                            <div class="mb-2">
+                                {% for tag in discussion.tags.all %}
+                                    <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                                {% endfor %}
+                            </div>
+                            <p class="mb-0">{{ discussion.description|truncatewords:30 }}</p>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-primary">{{ discussion.posts.count }} replies</span>
+                        </div>
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            {% else %}
+                <p class="text-center">No discussions found. Be the first to start a discussion!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

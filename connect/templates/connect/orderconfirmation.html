@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="text-center">
+    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+    <h3 class="mt-3">Order Confirmed!</h3>
+    <p>Your order has been successfully placed. Thank you for shopping with us!</p>
+  </div>
+
+  <!-- Order Details -->
+  <div class="card mt-4">
+    <div class="card-header bg-success text-white">
+      Order Summary
+    </div>
+    <div class="card-body">
+      <p><strong>Order ID:</strong> {{ order.id }}</p>
+      <p><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y h:i A" }}</p>
+      <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+      <p><strong>Payment Method:</strong> {{ order.payment_method|title }}</p>
+    </div>
+  </div>
+
+  <!-- Delivery Details -->
+  <div class="card mt-4">
+    <div class="card-header bg-success text-white">
+      Delivery Details
+    </div>
+    <div class="card-body">
+      <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+      {% if order.delivery_instructions %}
+      <p><strong>Special Instructions:</strong> {{ order.delivery_instructions }}</p>
+      {% endif %}
+      <p><strong>Estimated Delivery:</strong> {{ order.estimated_delivery|date:"M d, Y" }}</p>
+    </div>
+  </div>
+
+  <!-- Order Items -->
+  <div class="card mt-4">
+    <div class="card-header bg-success text-white">
+      Items Ordered
+    </div>
+    <div class="card-body">
+      <table class="table">
+        <thead class="table-success">
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.product.price|multiply:item.quantity }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Next Steps -->
+  <div class="text-center mt-4">
+    <p>Need help? Contact our <a href="{% url 'customer_support' %}" class="text-success">Customer Support</a>.</p>
+    <a href="{% url 'marketplace_home' %}" class="btn btn-success">Continue Shopping</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Order History</h3>
+  <p>View all your past orders and their details.</p>
+
+  <!-- Order List -->
+  <div class="row">
+    {% if orders %}
+      {% for order in orders %}
+      <div class="col-md-12 mb-3">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <strong>Order ID:</strong> {{ order.id }}
+            <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+              {{ order.status|title }}
+            </span>
+          </div>
+          <div class="card-body">
+            <p><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y h:i A" }}</p>
+            <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+            <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+            <a href="{% url 'order_details' order.id %}" class="btn btn-success btn-sm">View Details</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="col-md-12 text-center">
+      <p>You have no orders yet. Start shopping today!</p>
+      <a href="{% url 'marketplace_home' %}" class="btn btn-success">Go to Marketplace</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

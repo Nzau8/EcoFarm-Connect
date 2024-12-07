@@ -1,0 +1,57 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Course Catalog - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Course Catalog</h1>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <form method="get" class="mb-3">
+                <select name="category" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <!-- Courses Grid -->
+    <div class="row">
+        {% for course in courses %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if course.image %}
+                    <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                {% else %}
+                    <img src="{% static 'images/default-course.jpg' %}" class="card-img-top" alt="Default Course Image">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ course.title }}</h5>
+                    <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                    <div class="mb-2">
+                        <span class="badge bg-primary">{{ course.level }}</span>
+                        <span class="badge bg-secondary">{{ course.duration }}</span>
+                    </div>
+                    <p class="card-text"><small class="text-muted">Instructor: {{ course.instructor }}</small></p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <a href="{% url 'connect:coursedetails' course.id %}" class="btn btn-primary w-100">View Course</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <p class="text-center">No courses found.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

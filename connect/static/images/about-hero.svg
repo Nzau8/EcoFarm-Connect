@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+    <style>
+        .primary { fill: #28a745; }
+        .secondary { fill: #218838; }
+        .accent { fill: #ffc107; }
+        .light { fill: #f8f9fa; }
+    </style>
+    <!-- Background -->
+    <rect class="light" x="0" y="0" width="800" height="600"/>
+    
+    <!-- Farm Elements -->
+    <g transform="translate(100, 50)">
+        <!-- Field/Land -->
+        <path class="secondary" d="M50 300 Q400 250 600 300 L600 500 L50 500 Z" opacity="0.1"/>
+        
+        <!-- Plants -->
+        <g transform="translate(150, 200)">
+            <path class="primary" d="M0 0 C30 -30,30 -60,0 -60 C-30 -60,-30 -30,0 0" />
+            <rect class="accent" x="-5" y="0" width="10" height="100"/>
+        </g>
+        <g transform="translate(250, 180)">
+            <path class="primary" d="M0 0 C40 -40,40 -80,0 -80 C-40 -80,-40 -40,0 0" />
+            <rect class="accent" x="-5" y="0" width="10" height="120"/>
+        </g>
+        <g transform="translate(350, 220)">
+            <path class="primary" d="M0 0 C25 -25,25 -50,0 -50 C-25 -50,-25 -25,0 0" />
+            <rect class="accent" x="-5" y="0" width="10" height="80"/>
+        </g>
+        
+        <!-- Sun -->
+        <circle class="accent" cx="500" cy="100" r="40" opacity="0.8"/>
+        
+        <!-- Clouds -->
+        <path class="secondary" d="M100 100 Q130 80,160 100 Q190 80,220 100 Q190 120,160 100 Q130 120,100 100" opacity="0.2"/>
+        <path class="secondary" d="M400 150 Q430 130,460 150 Q490 130,520 150 Q490 170,460 150 Q430 170,400 150" opacity="0.2"/>
+    </g>
+    
+    <!-- Decorative Elements -->
+    <g transform="translate(0, 0)">
+        <circle class="primary" cx="50" cy="50" r="10" opacity="0.5"/>
+        <circle class="secondary" cx="750" cy="550" r="15" opacity="0.5"/>
+        <circle class="accent" cx="700" cy="100" r="12" opacity="0.5"/>
+    </g>
+</svg> 

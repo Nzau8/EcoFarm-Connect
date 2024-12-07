@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center text-success">{{ discussion.title }}</h1>
+    <p>{{ discussion.description }}</p>
+    
+    <!-- Tags -->
+    <div class="mb-3">
+        <span class="badge badge-primary">{{ discussion.tags.all|join:", " }}</span>
+    </div>
+
+    <!-- Discussion Posts -->
+    <div class="list-group">
+        {% for post in discussion.posts.all %}
+        <div class="list-group-item">
+            <h5>{{ post.user.username }} says:</h5>
+            <p>{{ post.content }}</p>
+            <p><small>Posted on {{ post.created_at }}</small></p>
+        </div>
+        {% empty %}
+        <p>No posts yet. Be the first to post!</p>
+        {% endfor %}
+    </div>
+
+    <!-- Add Post Form -->
+    {% if user.is_authenticated %}
+    <form method="POST" class="mt-4">
+        {% csrf_token %}
+        <div class="form-group">
+            <textarea name="content" class="form-control" placeholder="Add a post" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-success">Post</button>
+    </form>
+    {% else %}
+    <p>Please <a href="{% url 'login' %}">log in</a> to post a comment.</p>
+    {% endif %}
+</div>
+{% endblock %}

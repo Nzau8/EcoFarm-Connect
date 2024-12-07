@@ -1,0 +1,270 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Buyer Dashboard - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Buyer Dashboard</h1>
+    
+    <!-- Buyer Profile Section -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title">Welcome, {{ buyer.user.username }}</h2>
+            <p class="card-text">Address: {{ buyer.address }}</p>
+            <p class="card-text">Contact: {{ buyer.phone_number }}</p>
+            <a href="{% url 'connect:editbuyerprofile' %}" class="btn btn-primary">Edit Profile</a>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Total Orders</h5>
+                    <p class="card-text h3">{{ total_orders }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Pending Orders</h5>
+                    <p class="card-text h3">{{ pending_orders }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Completed Orders</h5>
+                    <p class="card-text h3">{{ completed_orders }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders Section -->
+    <div class="card">
+        <div class="card-body">
+            <h3 class="mb-3">Recent Orders</h3>
+            {% if orders %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>#{{ order.id }}</td>
+                                <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{{ order.status|lower }}">
+                                        {{ order.status }}
+                                    </span>
+                                </td>
+                                <td>KES {{ order.total_price|floatformat:2 }}</td>
+                                <td>
+                                    <a href="{% url 'connect:orderconfirmation' order.id %}" class="btn btn-sm btn-info">Details</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center">No orders yet. Start shopping in our <a href="{% url 'connect:marketplacehome' %}">marketplace</a>!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Wishlist Section -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h3 class="mb-3">My Wishlist</h3>
+            {% if wishlist_items %}
+                <div class="row">
+                    {% for item in wishlist_items %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ item.product.name }}</h5>
+                                <p class="card-text">KES {{ item.product.price|floatformat:2 }}</p>
+                                <a href="{% url 'connect:productdetails' item.product.id %}" class="btn btn-primary btn-sm">View Product</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-center">Your wishlist is empty.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Add this after the Wishlist Section -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="mb-0">Shopping Cart</h3>
+                {% if cart_items %}
+                    <span class="badge bg-primary">{{ cart_items|length }} items</span>
+                {% endif %}
+            </div>
+            
+            {% if cart_items %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if item.product.image %}
+                                            <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
+                                                 class="cart-item-image me-2" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% endif %}
+                                        <div>
+                                            <h6 class="mb-0">{{ item.product.name }}</h6>
+                                            <small class="text-muted">{{ item.product.seller.company_name }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>KES {{ item.product.price|floatformat:2 }}</td>
+                                <td>
+                                    <div class="quantity-controls">
+                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                onclick="updateQuantity('{{ item.id }}', -1)">-</button>
+                                        <span class="mx-2">{{ item.quantity }}</span>
+                                        <button class="btn btn-sm btn-outline-secondary" 
+                                                onclick="updateQuantity('{{ item.id }}', 1)">+</button>
+                                    </div>
+                                </td>
+                                <td>KES {{ item.product.price|multiply:item.quantity|floatformat:2 }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-danger" 
+                                            onclick="removeFromCart('{{ item.id }}')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td><strong>KES {{ cart_total|floatformat:2 }}</strong></td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="text-end mt-3">
+                    <a href="{% url 'connect:checkout' %}" class="btn btn-success">
+                        Proceed to Checkout
+                    </a>
+                </div>
+            {% else %}
+                <p class="text-center">Your cart is empty. <a href="{% url 'connect:marketplacehome' %}">Continue shopping</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .badge {
+        padding: 0.5rem 1rem;
+    }
+    
+    .bg-pending {
+        background-color: #ffc107;
+    }
+    
+    .bg-processing {
+        background-color: #17a2b8;
+    }
+    
+    .bg-delivered {
+        background-color: #28a745;
+    }
+    
+    .bg-cancelled {
+        background-color: #dc3545;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    
+    .table th {
+        border-top: none;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(cartItemId, change) {
+    fetch(`/cart/update/${cartItemId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({ change: change })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+function removeFromCart(cartItemId) {
+    if (confirm('Are you sure you want to remove this item from your cart?')) {
+        fetch(`/cart/remove/${cartItemId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

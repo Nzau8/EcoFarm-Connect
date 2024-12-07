@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Welcome, {{ user.username }} - Your Seller Dashboard</h3>
+  <p>Manage your products, orders, and track your sales.</p>
+
+  <!-- Dashboard Overview -->
+  <div class="row">
+    <div class="col-md-4 mb-3">
+      <div class="card bg-success text-white">
+        <div class="card-body">
+          <h5 class="card-title">Total Products</h5>
+          <p class="card-text">{{ total_products }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card bg-warning text-white">
+        <div class="card-body">
+          <h5 class="card-title">Orders Pending</h5>
+          <p class="card-text">{{ pending_orders }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4 mb-3">
+      <div class="card bg-info text-white">
+        <div class="card-body">
+          <h5 class="card-title">Total Earnings</h5>
+          <p class="card-text">${{ total_earnings }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="row mt-4">
+    <div class="col-md-4 mb-3">
+      <a href="{% url 'add_product' %}" class="btn btn-success btn-block">Add New Product</a>
+    </div>
+    <div class="col-md-4 mb-3">
+      <a href="{% url 'view_orders' %}" class="btn btn-warning btn-block">View Orders</a>
+    </div>
+    <div class="col-md-4 mb-3">
+      <a href="{% url 'product_reviews' %}" class="btn btn-info btn-block">Manage Reviews</a>
+    </div>
+  </div>
+
+  <!-- Recent Products -->
+  <div class="mt-4">
+    <h4>Your Recent Products</h4>
+    {% if products %}
+    <div class="row">
+      {% for product in products %}
+      <div class="col-md-3 mb-3">
+        <div class="card">
+          <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+          <div class="card-body">
+            <h5 class="card-title">{{ product.name }}</h5>
+            <p class="card-text">${{ product.price }}</p>
+            <a href="{% url 'edit_product' product.id %}" class="btn btn-warning btn-sm">Edit</a>
+            <a href="{% url 'delete_product' product.id %}" class="btn btn-danger btn-sm">Delete</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p>No products listed yet. Add your first product!</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

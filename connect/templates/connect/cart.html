@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Your Cart</h3>
+
+  <!-- Cart Items -->
+  <div class="row">
+    <div class="col-12">
+      <table class="table table-bordered">
+        <thead class="table-success">
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Price</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Subtotal</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart.items %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="img-thumbnail" style="width: 75px; height: 75px; object-fit: cover;">
+                <span class="ms-3">{{ item.product.name }}</span>
+              </div>
+            </td>
+            <td>${{ item.product.price }}</td>
+            <td>
+              <form method="POST" action="{% url 'update_cart' item.product.id %}">
+                {% csrf_token %}
+                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control" style="width: 80px;">
+                <button type="submit" class="btn btn-sm btn-outline-success mt-2">Update</button>
+              </form>
+            </td>
+            <td>${{ item.product.price|multiply:item.quantity }}</td>
+            <td>
+              <form method="POST" action="{% url 'remove_from_cart' item.product.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Cart Summary -->
+  <div class="row">
+    <div class="col-md-4 ms-auto">
+      <div class="card">
+        <div class="card-body">
+          <h5>Cart Summary</h5>
+          <p>Total Items: <strong>{{ cart.total_items }}</strong></p>
+          <p>Total Price: <strong>${{ cart.total_price }}</strong></p>
+          <a href="{% url 'checkout' %}" class="btn btn-success w-100">Proceed to Checkout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

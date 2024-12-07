@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Chat with Boda Rider</h3>
+  <p>Coordinate the delivery details for your order.</p>
+
+  <!-- Chat Interface -->
+  <div class="card">
+    <div class="card-header bg-success text-white">
+      <strong>Chat with {{ chat.rider.username }}</strong>
+    </div>
+    <div class="card-body" style="height: 400px; overflow-y: scroll;">
+      <div id="chat-messages">
+        {% for message in chat.messages.all %}
+          <div class="message">
+            <strong>{{ message.sender.username }}:</strong>
+            <p>{{ message.content }}</p>
+            <small class="text-muted">{{ message.created_at|date:"M d, Y h:i A" }}</small>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="card-footer">
+      <form method="POST" action="{% url 'send_boda_message' chat.id %}">
+        {% csrf_token %}
+        <div class="input-group">
+          <input type="text" name="message" class="form-control" placeholder="Type a message..." required>
+          <button class="btn btn-success" type="submit">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="mt-4 text-center">
+    <a href="{% url 'order_details' order.id %}" class="btn btn-outline-success">Back to Order Details</a>
+  </div>
+</div>
+{% endblock %}

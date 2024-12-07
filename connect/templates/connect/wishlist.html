@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Your Wishlist</h3>
+  <p>View all the items you've added to your wishlist. Click to add to cart or remove items.</p>
+
+  <!-- Wishlist Items -->
+  <div class="row">
+    {% if wishlist_items %}
+      {% for item in wishlist_items %}
+      <div class="col-md-4 mb-3">
+        <div class="card">
+          <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}">
+          <div class="card-body">
+            <h5 class="card-title">{{ item.product.name }}</h5>
+            <p class="card-text">${{ item.product.price }}</p>
+            <a href="{% url 'add_to_cart' item.product.id %}" class="btn btn-success">Add to Cart</a>
+            <a href="{% url 'remove_from_wishlist' item.id %}" class="btn btn-danger">Remove</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+    <div class="col-md-12 text-center">
+      <p>Your wishlist is empty. Browse products to add to your wishlist!</p>
+      <a href="{% url 'marketplace_home' %}" class="btn btn-success">Go to Marketplace</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
