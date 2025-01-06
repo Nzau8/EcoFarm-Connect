@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Order Delivery Tracking</h3>
+  <p>Track the delivery status of your order in real-time.</p>
+
+  <!-- Order Details -->
+  <div class="card mb-4">
+    <div class="card-header bg-success text-white">
+      Order #{{ order.id }}
+    </div>
+    <div class="card-body">
+      <p><strong>Product:</strong> {{ order.product.name }}</p>
+      <p><strong>Buyer:</strong> {{ order.buyer.username }}</p>
+      <p><strong>Quantity:</strong> {{ order.quantity }}</p>
+      <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+      <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+    </div>
+  </div>
+
+  <!-- Delivery Status -->
+  <div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+      Delivery Status
+    </div>
+    <div class="card-body">
+      <p><strong>Current Status:</strong> {{ order.delivery_status }}</p>
+      <p><strong>Estimated Delivery Time:</strong> {{ order.estimated_delivery_time }}</p>
+      <div class="progress">
+        <div 
+          class="progress-bar bg-success" 
+          role="progressbar" 
+          style="width: {{ order.delivery_progress }}%;"
+          aria-valuenow="{{ order.delivery_progress }}"
+          aria-valuemin="0" 
+          aria-valuemax="100">
+          {{ order.delivery_progress }}%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivery Personnel Details -->
+  <div class="card mb-4">
+    <div class="card-header bg-info text-white">
+      Assigned Delivery Personnel
+    </div>
+    <div class="card-body">
+      <p><strong>Name:</strong> {{ order.delivery_person.name }}</p>
+      <p><strong>Contact:</strong> {{ order.delivery_person.contact }}</p>
+      <a href="{% url 'chat_with_delivery_person' order.delivery_person.id %}" class="btn btn-primary">Message Boda Rider</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

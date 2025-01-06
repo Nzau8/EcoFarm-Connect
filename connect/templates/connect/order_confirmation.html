@@ -1,0 +1,13 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>Order Confirmation</h2>
+    <p>Thank you for your order!</p>
+    <h4>Order ID: {{ order.id }}</h4>
+    <p>Delivery Method: {{ order.delivery_method }}</p>
+    <p>Delivery Fee: KES {{ order.delivery_fee }}</p>
+    <p>Total Amount: KES {{ order.total_price }}</p>
+</div>
+{% endblock %} 

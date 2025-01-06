@@ -1,0 +1,133 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">Create an Account</h2>
+                    
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Username</label>
+                            {{ form.username }}
+                            {% if form.username.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.username.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">Email</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.email.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password1" class="form-label">Password</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.password1.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">{{ form.password1.help_text }}</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password2" class="form-label">Confirm Password</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.password2.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_role" class="form-label">I want to join as a:</label>
+                            {{ form.role }}
+                        </div>
+
+                        <!-- Additional fields that show/hide based on role -->
+                        <div id="seller_fields" class="role-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="id_company_name" class="form-label">Company Name</label>
+                                {{ form.company_name }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_location" class="form-label">Location</label>
+                                {{ form.location }}
+                            </div>
+                        </div>
+
+                        <div id="bodarider_fields" class="role-fields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="id_bike_model" class="form-label">Bike Model</label>
+                                {{ form.bike_model }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_license_number" class="form-label">License Number</label>
+                                {{ form.license_number }}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_phone_number" class="form-label">Phone Number</label>
+                            {{ form.phone_number }}
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">Sign Up</button>
+                        </div>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <p>Already have an account? <a href="{% url 'connect:login' %}">Login</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.getElementById('id_role');
+    const sellerFields = document.getElementById('seller_fields');
+    const bodariderFields = document.getElementById('bodarider_fields');
+
+    function toggleFields() {
+        const selectedRole = roleSelect.value;
+        sellerFields.style.display = selectedRole === 'seller' ? 'block' : 'none';
+        bodariderFields.style.display = selectedRole === 'bodarider' ? 'block' : 'none';
+    }
+
+    roleSelect.addEventListener('change', toggleFields);
+    toggleFields(); // Initial state
+});
+</script>
+{% endblock %}

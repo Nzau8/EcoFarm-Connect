@@ -1,0 +1,75 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Connect{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <!-- Product Images -->
+    <div class="col-md-6">
+      {% if product.image %}
+        <!-- Debug info -->
+        <p>Image URL: {{ product.image.url }}</p>
+        <p>Image Path: {{ product.image.path }}</p>
+        
+        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded">
+      {% else %}
+        <p>No image available</p>
+        <img src="{% static 'connect/images/default-product.jpg' %}" alt="Default product image" class="img-fluid rounded">
+      {% endif %}
+    </div>
+
+    <!-- Product Details -->
+    <div class="col-md-6">
+      <h2>{{ product.name }}</h2>
+      <p class="text-muted">Sold by: {{ product.seller.company_name }}</p>
+      
+      <div class="price-section my-3">
+        <h3>KES {{ product.price }}</h3>
+        <p>{{ product.stock }} {{ product.unit }} available</p>
+      </div>
+
+      <div class="description-section my-3">
+        <h4>Description</h4>
+        <p>{{ product.description }}</p>
+      </div>
+
+      <div class="delivery-section my-3">
+        <h4>Delivery Options</h4>
+        {% if product.delivery_available %}
+            <p class="text-success">
+                <i class="fas fa-truck"></i> Seller provides delivery
+            </p>
+        {% else %}
+            <p class="text-info">
+                <i class="fas fa-motorcycle"></i> Delivery available through our riders
+            </p>
+        {% endif %}
+        
+        {% if product.pickup_available %}
+            <p class="text-success">
+                <i class="fas fa-store"></i> Pickup available from seller's location
+            </p>
+        {% endif %}
+        
+        <p>
+            <i class="fas fa-map-marker-alt"></i> Location: {{ product.location }}
+        </p>
+      </div>
+
+      {% if user.is_authenticated and user.buyer %}
+        <form method="POST" action="{% url 'connect:add_to_cart' product.id %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="quantity">Quantity ({{ product.unit }}):</label>
+            <input type="number" name="quantity" id="quantity" class="form-control" 
+                   min="1" max="{{ product.stock }}" value="1" required>
+          </div>
+          <button type="submit" class="btn btn-success mt-3">Add to Cart</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

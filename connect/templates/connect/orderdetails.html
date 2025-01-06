@@ -1,0 +1,86 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Order Details</h3>
+  <p>Details for Order ID: <strong>{{ order.id }}</strong></p>
+
+  <!-- Order Summary -->
+  <div class="card mt-3">
+    <div class="card-header bg-success text-white">Order Summary</div>
+    <div class="card-body">
+      <p><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y h:i A" }}</p>
+      <p><strong>Status:</strong> 
+        <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+          {{ order.status|title }}
+        </span>
+      </p>
+      <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+      <p><strong>Payment Method:</strong> {{ order.payment_method|title }}</p>
+    </div>
+  </div>
+
+  <!-- Delivery Information -->
+  <div class="card mt-3">
+    <div class="card-header bg-success text-white">Delivery Information</div>
+    <div class="card-body">
+      <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+      {% if order.delivery_instructions %}
+      <p><strong>Special Instructions:</strong> {{ order.delivery_instructions }}</p>
+      {% endif %}
+      <p><strong>Estimated Delivery:</strong> {{ order.estimated_delivery|date:"M d, Y" }}</p>
+      <p><strong>Tracking Status:</strong> 
+        {% if order.tracking_url %}
+        <a href="{{ order.tracking_url }}" target="_blank" class="text-success">Track your delivery</a>
+        {% else %}
+        Not available
+        {% endif %}
+      </p>
+      {% if order.delivery_status == 'DELIVERED' and not order.delivery_confirmed_at %}
+        <div class="alert alert-info">
+            <h5>Delivery Confirmation Required</h5>
+            <p>Your order has been marked as delivered. Please confirm if you have received it.</p>
+            <a href="{% url 'connect:confirm_delivery' order.id %}" class="btn btn-success">
+                Confirm Delivery
+            </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Items Ordered -->
+  <div class="card mt-3">
+    <div class="card-header bg-success text-white">Items Ordered</div>
+    <div class="card-body">
+      <table class="table">
+        <thead class="table-success">
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in order.items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.product.price|multiply:item.quantity }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="text-center mt-4">
+    {% if order.status == 'pending' %}
+    <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger">Cancel Order</a>
+    {% endif %}
+    {% if order.status == 'delivered' %}
+    <a href="{% url 'product_review' order.id %}" class="btn btn-success">Review Products</a>
+    {% endif %}
+    <a href="{% url 'order_history' %}" class="btn btn-outline-success">Back to Order History</a>
+  </div>
+</div>
+{% endblock %}

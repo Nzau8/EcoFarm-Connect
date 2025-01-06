@@ -1,0 +1,258 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}About Us - EcoFarm Connect{% endblock %}
+
+{% block content %}
+<div class="about-page">
+    <!-- Hero Section -->
+    <section class="about-hero glass-card">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="gradient-text mb-4">About EcoFarm Connect</h1>
+                    <p class="lead mb-4">Revolutionizing agricultural commerce through sustainable connections</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">{{ stats.farmers }}</span>
+                            <span class="stat-label">Farmers</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ stats.customers }}</span>
+                            <span class="stat-label">Customers</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">{{ stats.riders }}</span>
+                            <span class="stat-label">Riders</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <img src="{% static 'images/about-hero.svg' %}" alt="About Us" class="img-fluid">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="mission-section py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="mission-card">
+                        <div class="icon-wrapper">
+                            <i class="bi bi-bullseye"></i>
+                        </div>
+                        <h3>Our Mission</h3>
+                        <p>To create a sustainable ecosystem that connects farmers, buyers, and delivery services while promoting eco-friendly agricultural practices.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mission-card">
+                        <div class="icon-wrapper">
+                            <i class="bi bi-eye"></i>
+                        </div>
+                        <h3>Our Vision</h3>
+                        <p>To be the leading platform for sustainable agriculture commerce in East Africa, empowering farmers and promoting food security.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mission-card">
+                        <div class="icon-wrapper">
+                            <i class="bi bi-heart"></i>
+                        </div>
+                        <h3>Our Values</h3>
+                        <p>Sustainability, Innovation, Community, Transparency, and Excellence in everything we do.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works py-5 bg-light">
+        <div class="container">
+            <h2 class="section-title text-center mb-5">How It Works</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-icon">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <h3>Register</h3>
+                        <p>Sign up as a farmer, buyer, or delivery partner</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-icon">
+                            <i class="bi bi-shop"></i>
+                        </div>
+                        <h3>Connect</h3>
+                        <p>List products or browse the marketplace</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-icon">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                        <h3>Trade</h3>
+                        <p>Make secure transactions and arrange deliveries</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-content">
+                        <div class="timeline-icon">
+                            <i class="bi bi-graph-up"></i>
+                        </div>
+                        <h3>Grow</h3>
+                        <p>Learn and expand your agricultural business</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(33, 136, 56, 0.1) 100%);
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 3rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        display: block;
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .stat-label {
+        color: var(--secondary);
+        font-size: 0.9rem;
+    }
+
+    .mission-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+
+    .mission-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .icon-wrapper {
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline {
+        position: relative;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 2px;
+        height: 100%;
+        background: var(--primary);
+        transform: translateX(-50%);
+    }
+
+    .timeline-item {
+        padding: 2rem 0;
+        position: relative;
+        width: 50%;
+        padding-right: 2rem;
+    }
+
+    .timeline-item:nth-child(even) {
+        margin-left: 50%;
+        padding-left: 2rem;
+        padding-right: 0;
+    }
+
+    .timeline-content {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .timeline-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        top: 50%;
+        right: -20px;
+        transform: translateY(-50%);
+    }
+
+    .timeline-item:nth-child(even) .timeline-icon {
+        left: -20px;
+        right: auto;
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .timeline::before {
+            left: 0;
+        }
+
+        .timeline-item {
+            width: 100%;
+            padding-left: 2rem;
+            padding-right: 0;
+        }
+
+        .timeline-item:nth-child(even) {
+            margin-left: 0;
+        }
+
+        .timeline-icon {
+            left: -20px;
+            right: auto;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,71 @@
+<!-- Notification Bell -->
+<div class="position-relative d-inline-block">
+    <button class="btn btn-light" id="notificationBell">
+      <i class="bi bi-bell"></i>
+      <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+        {{ unread_count }}
+      </span>
+    </button>
+  </div>
+  
+  <!-- Notification Dropdown -->
+  <div id="notificationDropdown" class="card shadow-lg position-absolute" style="width: 300px; display: none; z-index: 1050;">
+    <div class="card-header bg-success text-white">
+      Notifications
+    </div>
+    <div class="card-body p-2">
+      <ul id="notificationList" class="list-unstyled mb-0">
+        {% for notification in notifications %}
+        <li class="mb-2">
+          <a href="{{ notification.link }}" class="text-decoration-none d-flex align-items-center">
+            <span class="{% if not notification.read %}fw-bold{% endif %}">{{ notification.message }}</span>
+          </a>
+          <small class="text-muted">{{ notification.timestamp|timesince }} ago</small>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="card-footer text-end">
+      <a href="{% url 'notifications_all' %}" class="btn btn-sm btn-success">View All</a>
+    </div>
+  </div>
+  
+  <script>
+    const notificationBell = document.getElementById('notificationBell');
+    const notificationDropdown = document.getElementById('notificationDropdown');
+  
+    // Toggle notification dropdown
+    notificationBell.addEventListener('click', () => {
+      notificationDropdown.style.display = notificationDropdown.style.display === 'none' ? 'block' : 'none';
+    });
+  
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!notificationDropdown.contains(e.target) && e.target !== notificationBell) {
+        notificationDropdown.style.display = 'none';
+      }
+    });
+  
+    // WebSocket connection for real-time updates
+    const notificationSocket = new WebSocket('ws://' + window.location.host + '/ws/notifications/');
+  
+    notificationSocket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+  
+      // Update badge count
+      const badge = document.getElementById('notificationBadge');
+      badge.innerText = parseInt(badge.innerText) + 1;
+  
+      // Add new notification to list
+      const notificationList = document.getElementById('notificationList');
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <a href="${data.link}" class="text-decoration-none d-flex align-items-center">
+          <span class="fw-bold">${data.message}</span>
+        </a>
+        <small class="text-muted">Just now</small>
+      `;
+      notificationList.prepend(li);
+    };
+  </script>
+  

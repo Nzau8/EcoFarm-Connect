@@ -1,0 +1,81 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <!-- Resource Title -->
+  <div class="mb-4">
+    <h1 class="text-success">Resource Title</h1>
+    <p class="text-muted">Published on: November 30, 2024</p>
+  </div>
+
+  <!-- Resource Content -->
+  <div class="mb-5">
+    <img src="https://via.placeholder.com/800x400" class="img-fluid mb-4" alt="Resource Image">
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eget quam vel ex dictum fermentum. 
+      Vivamus bibendum elit vitae lorem vehicula, a bibendum erat pharetra.
+    </p>
+    <p>
+      Ut feugiat odio vitae purus dictum, non iaculis arcu cursus. Curabitur vehicula dictum ex, a cursus lacus tincidunt ac.
+    </p>
+  </div>
+
+  <!-- Comments Section -->
+  <div class="mb-5">
+    <h2 class="text-success">Comments</h2>
+    <form class="mb-4">
+      <div class="mb-3">
+        <textarea 
+          class="form-control" 
+          rows="3" 
+          placeholder="Leave a comment..."></textarea>
+      </div>
+      <button type="submit" class="btn btn-success">Post Comment</button>
+    </form>
+    <div class="border p-3 mb-3">
+      <strong>User1</strong>  
+      <p>This resource is incredibly helpful. Thank you!</p>
+      <small class="text-muted">Posted on: November 29, 2024</small>
+    </div>
+    <div class="border p-3">
+      <strong>User2</strong>  
+      <p>Could you provide more details about the second section?</p>
+      <small class="text-muted">Posted on: November 30, 2024</small>
+    </div>
+  </div>
+
+  <!-- Related Resources -->
+  <div>
+    <h2 class="text-success">Related Resources</h2>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <img src="https://via.placeholder.com/150" class="card-img-top" alt="Related Resource 1">
+          <div class="card-body">
+            <h5 class="card-title">Related Resource 1</h5>
+            <a href="#" class="btn btn-success btn-sm">View Resource</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <img src="https://via.placeholder.com/150" class="card-img-top" alt="Related Resource 2">
+          <div class="card-body">
+            <h5 class="card-title">Related Resource 2</h5>
+            <a href="#" class="btn btn-success btn-sm">View Resource</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <img src="https://via.placeholder.com/150" class="card-img-top" alt="Related Resource 3">
+          <div class="card-body">
+            <h5 class="card-title">Related Resource 3</h5>
+            <a href="#" class="btn btn-success btn-sm">View Resource</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

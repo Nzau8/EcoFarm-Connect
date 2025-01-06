@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+    <style>
+        .primary { fill: #28a745; }
+        .secondary { fill: #218838; }
+        .accent { fill: #ffc107; }
+        .light { fill: #f8f9fa; }
+    </style>
+    <rect class="light" x="0" y="0" width="800" height="600"/>
+    <g transform="translate(100, 50)">
+        <!-- Books Stack -->
+        <rect class="primary" x="50" y="300" width="200" height="30" rx="5"/>
+        <rect class="secondary" x="70" y="270" width="200" height="30" rx="5"/>
+        <rect class="primary" x="40" y="240" width="200" height="30" rx="5"/>
+        
+        <!-- Plant Growing -->
+        <path class="secondary" d="M400 200 C450 200,450 100,400 100 C350 100,350 200,400 200 Z"/>
+        <path class="primary" d="M380 250 C430 250,430 150,380 150 C330 150,330 250,380 250 Z"/>
+        <rect class="accent" x="385" y="200" width="30" height="150"/>
+        
+        <!-- Learning Icons -->
+        <circle class="primary" cx="600" cy="150" r="40"/>
+        <circle class="secondary" cx="500" cy="250" r="30"/>
+        <circle class="accent" cx="650" cy="200" r="25"/>
+    </g>
+    <!-- Decorative Elements -->
+    <g transform="translate(0, 0)">
+        <circle class="primary" cx="50" cy="50" r="10" opacity="0.5"/>
+        <circle class="secondary" cx="750" cy="550" r="15" opacity="0.5"/>
+        <circle class="accent" cx="700" cy="100" r="12" opacity="0.5"/>
+    </g>
+</svg> 

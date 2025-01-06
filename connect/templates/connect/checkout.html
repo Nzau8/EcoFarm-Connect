@@ -1,0 +1,27 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <h2>Checkout</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <h4>Select Delivery Method</h4>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="delivery_method" id="seller" value="Seller" checked>
+            <label class="form-check-label" for="seller">Seller Provides Delivery</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="delivery_method" id="buyer" value="Buyer">
+            <label class="form-check-label" for="buyer">Buyer Handles Delivery</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="delivery_method" id="boda" value="Boda Rider">
+            <label class="form-check-label" for="boda">Buyer Hires a Boda Rider (KES 50)</label>
+        </div>
+
+        <h4>Total Cost: KES {{ total_cost }}</h4>
+        <button type="submit" class="btn btn-success">Proceed to Payment</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}{{ discussion.title }} - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card mb-4">
+        <div class="card-body">
+            <h1 class="mb-3">{{ discussion.title }}</h1>
+            
+            <!-- Author and date info -->
+            <div class="discussion-meta mb-3">
+                <span class="me-3">By {{ discussion.user.username }}</span>
+                <span>Posted on {{ discussion.created_at|date }}</span>
+            </div>
+            
+            <!-- Tags -->
+            <div class="discussion-tags mb-3">
+                {% for tag in discussion.tags.all %}
+                <span class="badge bg-secondary me-1">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            
+            <!-- Description -->
+            <div class="discussion-content mb-4">
+                {{ discussion.description|linebreaks }}
+            </div>
+            
+            <!-- Edit/Delete buttons for author and admin -->
+            {% if request.user == discussion.user or request.user.is_staff %}
+            <div class="discussion-actions mb-3">
+                <a href="{% url 'connect:edit_discussion' discussion.id %}" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-edit"></i> Edit Discussion
+                </a>
+                <a href="{% url 'connect:delete_discussion' discussion.id %}" class="btn btn-outline-danger">
+                    <i class="fas fa-trash"></i> Delete Discussion
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Posts/Comments Section -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Responses</h3>
+                {% if user.is_authenticated %}
+                    <button class="btn btn-primary" onclick="toggleReplyForm()">
+                        <i class="fas fa-reply"></i> Add Response
+                    </button>
+                {% endif %}
+            </div>
+            
+            <!-- Reply Form - Hidden by default -->
+            {% if user.is_authenticated %}
+            <div id="replyForm" style="display: none;" class="mb-4">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea class="form-control" name="content" rows="3" 
+                                placeholder="Write your response..." required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-outline-secondary me-2" onclick="toggleReplyForm()">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Post Response</button>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- List of posts -->
+            <div class="posts-list">
+                {% for post in posts %}
+                <div class="post-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="user-avatar me-2">
+                                <i class="fas fa-user-circle fa-2x text-secondary"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block">{{ post.user.username }}</strong>
+                                <small class="text-muted">{{ post.created_at|date:"F j, Y, g:i a" }}</small>
+                            </div>
+                        </div>
+                        <div class="post-actions">
+                            <button class="btn btn-sm btn-link like-button" 
+                                    onclick="likePost({{ post.id }})"
+                                    data-post-id="{{ post.id }}">
+                                <i class="fas fa-heart {% if request.user in post.likes.all %}text-danger{% endif %}"></i>
+                                <span class="like-count">{{ post.like_count }}</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="post-content">
+                        {{ post.content|linebreaks }}
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr>{% endif %}
+                {% empty %}
+                <p class="text-muted text-center">No responses yet. Be the first to respond!</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleReplyForm() {
+    const replyForm = document.getElementById('replyForm');
+    if (replyForm.style.display === 'none') {
+        replyForm.style.display = 'block';
+        // Scroll to form
+        replyForm.scrollIntoView({ behavior: 'smooth' });
+        // Focus on textarea
+        replyForm.querySelector('textarea').focus();
+    } else {
+        replyForm.style.display = 'none';
+    }
+}
+
+function showReplyForm(postId) {
+    document.getElementById(`replyForm${postId}`).style.display = 'block';
+}
+
+function hideReplyForm(postId) {
+    document.getElementById(`replyForm${postId}`).style.display = 'none';
+}
+
+function likePost(postId) {
+    fetch(`/post/${postId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const button = document.querySelector(`[data-post-id="${postId}"]`);
+        const icon = button.querySelector('i');
+        const count = button.querySelector('.like-count');
+        
+        if (data.liked) {
+            icon.classList.add('text-danger');
+        } else {
+            icon.classList.remove('text-danger');
+        }
+        count.textContent = data.count;
+    });
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.discussion-meta {
+    color: #6c757d;
+}
+
+.post-item {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    transition: background-color 0.2s;
+}
+
+.post-item:hover {
+    background-color: #f1f3f5;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.post-content {
+    margin-left: 52px;  /* Aligns with the username */
+}
+
+.discussion-tags .badge {
+    font-size: 0.9em;
+}
+
+.reply-item {
+    background-color: #f8f9fa;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    font-size: 0.95em;
+}
+
+.like-button {
+    color: #6c757d;
+    padding: 0.25rem 0.5rem;
+}
+
+.like-button:hover {
+    color: #dc3545;
+}
+
+.like-button i {
+    transition: color 0.2s;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,332 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Contact Us - EcoFarm Connect{% endblock %}
+
+{% block content %}
+<div class="contact-page">
+    <!-- Hero Section -->
+    <section class="contact-hero glass-card">
+        <div class="container py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="gradient-text mb-4">Get in Touch</h1>
+                    <p class="lead mb-4">Have questions about EcoFarm Connect? We're here to help!</p>
+                    <div class="contact-info">
+                        <div class="info-item">
+                            <i class="bi bi-envelope"></i>
+                            <span>support@ecofarmconnect.com</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-telephone"></i>
+                            <span>+254 700 000000</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-geo-alt"></i>
+                            <span>Machakos, Kenya</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="contact-form-card">
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            <div class="mb-3 floating-label">
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <label for="name">Your Name</label>
+                                <div class="invalid-feedback">Please enter your name</div>
+                            </div>
+                            <div class="mb-3 floating-label">
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <label for="email">Email Address</label>
+                                <div class="invalid-feedback">Please enter a valid email</div>
+                            </div>
+                            <div class="mb-3 floating-label">
+                                <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                                <label for="message">Your Message</label>
+                                <div class="invalid-feedback">Please enter your message</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                Send Message
+                                <i class="bi bi-arrow-right ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial Section -->
+    <section class="testimonial-section py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Leave a Testimonial</h2>
+            <form method="post" action="{% url 'connect:leave_testimonial' %}">
+                {% csrf_token %}
+                <div class="mb-3 floating-label">
+                    <input type="text" class="form-control" id="testimonial_name" name="name" required>
+                    <label for="testimonial_name">Your Name</label>
+                </div>
+                <div class="mb-3 floating-label">
+                    <textarea class="form-control" id="testimonial_content" name="content" rows="4" required></textarea>
+                    <label for="testimonial_content">Your Testimonial</label>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Submit Testimonial</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section py-5">
+        <div class="container">
+            <h2 class="section-title text-center mb-5">Frequently Asked Questions</h2>
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="accordion" id="faqAccordion1">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    How do I register as a seller (farmer)?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion1">
+                                <div class="accordion-body">
+                                    Click on "Sign Up", select "Seller" role, and fill in your details including farm location and contact information. Once registered, you can start listing your organic products.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    What types of products can I sell?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion1">
+                                <div class="accordion-body">
+                                    You can sell organic farm produce, including fruits, vegetables, grains, and other agricultural products that meet our quality standards.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    How do I make payments?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion1">
+                                <div class="accordion-body">
+                                    We exclusively use M-Pesa for all transactions. When making a purchase, simply enter your M-Pesa number at checkout and follow the prompts on your phone to complete the secure payment.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                    How can I participate in the community forum?
+                                </button>
+                            </h2>
+                            <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion1">
+                                <div class="accordion-body">
+                                    Once registered, you can access the Community section to join discussions, share experiences, ask questions, and connect with other farmers and buyers interested in sustainable agriculture.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="accordion" id="faqAccordion2">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                    How does the delivery system work?
+                                </button>
+                            </h2>
+                            <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion2">
+                                <div class="accordion-body">
+                                    We partner with local boda riders who handle deliveries. Once an order is placed, it's assigned to a nearby rider who picks up the products from the seller and delivers them to the buyer.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                                    How can I access the Learning Hub?
+                                </button>
+                            </h2>
+                            <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion2">
+                                <div class="accordion-body">
+                                    The Learning Hub is available to all registered users. Access educational content, video tutorials, and expert webinars about sustainable farming practices through the Learning Hub section.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                                    What payment methods are accepted?
+                                </button>
+                            </h2>
+                            <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion2">
+                                <div class="accordion-body">
+                                    We accept various payment methods including M-Pesa, credit/debit cards, and bank transfers. All transactions are secure and protected.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-hero {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(33, 136, 56, 0.1) 100%);
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 3rem;
+    }
+
+    .contact-info {
+        margin-top: 2rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .info-item i {
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin-right: 1rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(40, 167, 69, 0.1);
+        border-radius: 50%;
+    }
+
+    .contact-form-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .floating-label {
+        position: relative;
+    }
+
+    .floating-label label {
+        position: absolute;
+        left: 1rem;
+        top: 0.8rem;
+        padding: 0 0.5rem;
+        background: white;
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+
+    .floating-label input:focus ~ label,
+    .floating-label input:not(:placeholder-shown) ~ label,
+    .floating-label textarea:focus ~ label,
+    .floating-label textarea:not(:placeholder-shown) ~ label {
+        top: -0.5rem;
+        font-size: 0.8rem;
+        color: var(--primary);
+    }
+
+    .form-control, .form-select {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+
+    .accordion-item {
+        border: none;
+        margin-bottom: 1rem;
+        border-radius: 8px !important;
+        overflow: hidden;
+    }
+
+    .accordion-button {
+        background: white;
+        border: none;
+        border-radius: 8px !important;
+        padding: 1.25rem;
+        font-weight: 500;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background: var(--primary);
+        color: white;
+    }
+
+    .accordion-body {
+        padding: 1.25rem;
+        background: white;
+    }
+
+    @media (max-width: 768px) {
+        .contact-form-card {
+            margin-top: 2rem;
+        }
+    }
+
+    .accordion-item {
+        margin-bottom: 1rem;
+        border: 1px solid rgba(40, 167, 69, 0.1);
+    }
+
+    .accordion-button {
+        transition: all 0.3s ease;
+    }
+
+    .accordion-button:not(.collapsed) {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    }
+
+    .accordion-button:not(.collapsed)::after {
+        filter: brightness(0) invert(1);
+    }
+
+    .accordion-body {
+        line-height: 1.6;
+        color: #666;
+    }
+
+    .faq-section {
+        background-color: rgba(40, 167, 69, 0.05);
+        border-radius: 50px 50px 0 0;
+        padding-top: 4rem;
+        margin-top: 3rem;
+    }
+
+    .section-title {
+        position: relative;
+        display: inline-block;
+        padding-bottom: 1rem;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 4px;
+        background: var(--primary);
+        border-radius: 2px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Leave a Review for {{ order.id }}</h3>
+  <p>Share your experience with the products you purchased.</p>
+
+  <form method="POST" action="{% url 'submit_review' order.id %}">
+    {% csrf_token %}
+    
+    <!-- Product Review Form -->
+    <div class="mb-3">
+      <label for="product" class="form-label">Select Product</label>
+      <select class="form-select" id="product" name="product" required>
+        <option value="" disabled selected>Select a product</option>
+        {% for item in order.items %}
+        <option value="{{ item.product.id }}">{{ item.product.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="rating" class="form-label">Rating</label>
+      <select class="form-select" id="rating" name="rating" required>
+        <option value="" disabled selected>Choose a rating</option>
+        <option value="1">1 - Poor</option>
+        <option value="2">2 - Fair</option>
+        <option value="3">3 - Good</option>
+        <option value="4">4 - Very Good</option>
+        <option value="5">5 - Excellent</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="comment" class="form-label">Your Comment</label>
+      <textarea class="form-control" id="comment" name="comment" rows="4" required></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success">Submit Review</button>
+  </form>
+
+  <div class="mt-4">
+    <a href="{% url 'order_history' %}" class="btn btn-outline-success">Back to Order History</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h3>Manage Your Orders</h3>
+  <p>View and manage orders for your products.</p>
+
+  <!-- Orders by Status -->
+  <div class="accordion" id="ordersAccordion">
+
+    <!-- Pending Orders -->
+    <div class="card">
+      <div class="card-header" id="pendingOrdersHeading">
+        <h5 class="mb-0">
+          <button class="btn btn-link text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#pendingOrders" aria-expanded="true" aria-controls="pendingOrders">
+            Pending Orders ({{ pending_orders|length }})
+          </button>
+        </h5>
+      </div>
+      <div id="pendingOrders" class="collapse show" aria-labelledby="pendingOrdersHeading" data-parent="#ordersAccordion">
+        <div class="card-body">
+          {% if pending_orders %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Buyer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in pending_orders %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ order.buyer.username }}</td>
+                <td>{{ order.product.name }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>${{ order.total_price }}</td>
+                <td>
+                  <a href="{% url 'order_details' order.id %}" class="btn btn-info btn-sm">Details</a>
+                  <a href="{% url 'update_order_status' order.id 'in_transit' %}" class="btn btn-success btn-sm">Mark as In Transit</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No pending orders at the moment.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- In Transit Orders -->
+    <div class="card">
+      <div class="card-header" id="inTransitOrdersHeading">
+        <h5 class="mb-0">
+          <button class="btn btn-link text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#inTransitOrders" aria-expanded="false" aria-controls="inTransitOrders">
+            In Transit Orders ({{ in_transit_orders|length }})
+          </button>
+        </h5>
+      </div>
+      <div id="inTransitOrders" class="collapse" aria-labelledby="inTransitOrdersHeading" data-parent="#ordersAccordion">
+        <div class="card-body">
+          {% if in_transit_orders %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Buyer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in in_transit_orders %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ order.buyer.username }}</td>
+                <td>{{ order.product.name }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>${{ order.total_price }}</td>
+                <td>
+                  <a href="{% url 'order_details' order.id %}" class="btn btn-info btn-sm">Details</a>
+                  <a href="{% url 'update_order_status' order.id 'delivered' %}" class="btn btn-success btn-sm">Mark as Delivered</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No in-transit orders at the moment.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Delivered Orders -->
+    <div class="card">
+      <div class="card-header" id="deliveredOrdersHeading">
+        <h5 class="mb-0">
+          <button class="btn btn-link text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#deliveredOrders" aria-expanded="false" aria-controls="deliveredOrders">
+            Delivered Orders ({{ delivered_orders|length }})
+          </button>
+        </h5>
+      </div>
+      <div id="deliveredOrders" class="collapse" aria-labelledby="deliveredOrdersHeading" data-parent="#ordersAccordion">
+        <div class="card-body">
+          {% if delivered_orders %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Buyer</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for order in delivered_orders %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ order.buyer.username }}</td>
+                <td>{{ order.product.name }}</td>
+                <td>{{ order.quantity }}</td>
+                <td>${{ order.total_price }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p>No delivered orders at the moment.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

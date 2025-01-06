@@ -1,0 +1,68 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Confirm Delivery - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Confirm Delivery for Order #{{ order.id }}</h4>
+                    
+                    <!-- Order Details -->
+                    <div class="order-details mb-4">
+                        <h5>Order Details</h5>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tbody>
+                                    {% for item in order.orderitem_set.all %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.quantity }} {{ item.product.unit }}</td>
+                                        <td>KES {{ item.product.price }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="2">Total:</th>
+                                        <th>KES {{ order.total_price }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Delivery Confirmation Form -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Delivery Notes (Optional)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                    placeholder="Any comments about the delivery?"></textarea>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirm_check" required>
+                            <label class="form-check-label" for="confirm_check">
+                                I confirm that I have received all items in good condition
+                            </label>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                Confirm Delivery
+                            </button>
+                            <a href="{% url 'connect:buyerorders' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

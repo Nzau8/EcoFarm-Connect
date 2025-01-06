@@ -1,0 +1,46 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Edit Discussion - Connect{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title mb-4">Edit Discussion</h1>
+                    
+                    <form method="post" id="discussionForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Form fields -->
+                        {{ form.as_p }}
+                        
+                        <!-- Tags -->
+                        <div class="mb-3">
+                            <label class="form-label">Tags</label>
+                            <input type="hidden" name="tagsList" id="tagsList" 
+                                   value="{{ discussion.tags.all|join:',' }}">
+                            <!-- Add your tag selection UI here -->
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Update Discussion</button>
+                            <a href="{% url 'connect:communityhome' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
