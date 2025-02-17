@@ -4,7 +4,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .models import Product, Cart, Order, Notification
 
-# Signal to update product stock after an order is placed
+# update product stock after an order is placed
 @receiver(post_save, sender=Order)
 def update_product_stock(sender, instance, created, **kwargs):
     if created:
@@ -12,7 +12,7 @@ def update_product_stock(sender, instance, created, **kwargs):
             product.stock -= product.quantity
             product.save()
 
-# Signal to send a notification when a new product is added to the cart
+# send a notification when a new product is added to the cart
 @receiver(post_save, sender=Cart)
 def cart_added_notification(sender, instance, created, **kwargs):
     if created:
@@ -22,7 +22,7 @@ def cart_added_notification(sender, instance, created, **kwargs):
             message=f"Product {instance.product.name} has been added to your cart."
         )
 
-# Signal to create a notification when a new order is placed
+# create a notification when a new order is placed
 @receiver(post_save, sender=Order)
 def order_placed_notification(sender, instance, created, **kwargs):
     if created:
@@ -37,11 +37,11 @@ def order_placed_notification(sender, instance, created, **kwargs):
                 message=f"New order placed: #{instance.id}"
             )
 
-# Signal to send an email when a product is added
+# send an email when a product is added
 @receiver(post_save, sender=Product)
 def send_product_add_email(sender, instance, created, **kwargs):
     if created:
-        # Send a notification email to the seller or admin
+        # notification email to the seller or admin
         send_mail(
             'New Product Added',
             f"A new product '{instance.name}' has been added to the marketplace.",

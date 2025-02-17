@@ -21,13 +21,17 @@ from .models import (
 )
 from .forms import (
     CustomUserCreationForm, DiscussionForm, PostForm,
-    SellerProfileForm, BuyerProfileForm, BodaRiderProfileForm
+    SellerProfileForm, BuyerProfileForm, BodaRiderProfileForm,ContactForm
 )
 from .mpesa import initiate_stk_push as process_mpesa_payment
 from .services import DeliveryAllocationService
 import json
 from django.contrib.admin.views.decorators import staff_member_required
 import logging
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.urls import reverse
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -53,37 +57,42 @@ def about(request):
 
 def contact_view(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        email = request.POST.get('email')
-        subject = request.POST.get('subject')
-        message = request.POST.get('message')
-        
-        email_subject = f'New Contact Form Submission: {subject}'
-        email_message = f"""
-        You have received a new message from the contact form:
-        
-        Name: {name}
-        Email: {email}
-        Subject: {subject}
-        Message:
-        {message}
-        """
-        
-        try:
-            send_mail(
-                email_subject,
-                email_message,
-                settings.EMAIL_HOST_USER,
-                ['nzau878@gmail.com'],
-                fail_silently=False,
-            )
-            messages.success(request, 'Thank you for your message! We will get back to you soon.')
-        except Exception as e:
-            messages.error(request, 'Sorry, there was an error sending your message. Please try again later.')
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
             
-        return redirect('connect:contact')
-    
-    return render(request, 'connect/contact.html')
+            email_subject = f'New Contact Form Submission: {subject}'
+            email_message = f"""
+            You have received a new message from the contact form:
+            
+            Name: {name}
+            Email: {email}
+            Subject: {subject}
+            Message:
+            {message}
+            """
+            
+            try:
+                send_mail(
+                    email_subject,
+                    email_message,
+                    settings.EMAIL_HOST_USER,
+                    ['nzau878@gmail.com'],  
+                    fail_silently=False,
+                )
+                messages.success(request, 'Thank you for your message! We will get back to you soon.')
+            except Exception as e:
+                messages.error(request, 'Sorry, there was an error sending your message. Please try again later.')
+
+            return redirect(reverse('connect:contact'))
+
+    else:
+        form = ContactForm()
+
+    return render(request, 'connect/contact.html', {'form': form})
 
 def signup(request):
     if request.method == 'POST':
@@ -322,7 +331,7 @@ def creatediscussion(request):
 
     return render(request, 'connect/creatediscussion.html', {'form': form})
 
-# View for searching discussions
+# searching discussions
 def searchresults(request):
     query = request.GET.get('query')
     discussions = Discussion.objects.filter(title__icontains=query)
@@ -808,7 +817,7 @@ def contact_view(request):
                 email_subject,
                 email_message,
                 settings.EMAIL_HOST_USER,  # From email
-                ['your.email@gmail.com'],  # Replace with your email where you want to receive messages
+                ['myemail.email@gmail.com'],  
                 fail_silently=False,
             )
             messages.success(request, 'Thank you for your message! We will get back to you soon.')
@@ -1296,3 +1305,19 @@ def payment(request, order_id):
     return render(request, 'connect/payment.html', {
         'order': order,
     })
+from django.shortcuts import render
+from django.contrib.auth.models import User
+
+def admin_user_list(request):
+    users = User.objects.all()
+    return render(request, 'admin_user_list.html', {'users': users})
+
+def admin_product_list(request):
+    products = Product.objects.all()
+    return render(request, 'admin_product_list.html', {'products': products})
+def admin_order_list(request):
+    orders = Order.objects.all()
+    return render(request, 'admin_order_list.html', {'orders': orders})
+def admin_earnings(request):
+    earnings = Earnings.objects.all()  # Customize the query as needed
+    return render(request, 'admin_earnings.html', {'earnings': earnings})

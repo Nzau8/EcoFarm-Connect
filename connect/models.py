@@ -438,4 +438,3 @@ class DeliveryAddress(models.Model):
             DeliveryAddress.objects.filter(user=self.user).exclude(id=self.id).update(is_default=False)
         super().save(*args, **kwargs)
 
-

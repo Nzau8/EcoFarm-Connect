@@ -11,7 +11,7 @@ import http.client
 
 
 
-# Use Django's request object
+
 def my_view(request):
     if request.method == 'POST':
         phone_number = request.POST.get('mpesa_phone')

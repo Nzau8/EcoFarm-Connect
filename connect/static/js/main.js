@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Enhanced UI Interactions
+// UI Interactions
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
     const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
-            // Only handle actual anchor links, not just "#"
+            // to change
             if (href === '#') return;
             
             e.preventDefault();
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Enhanced form validation
+    // form validation
     const forms = document.querySelectorAll('.needs-validation');
     forms.forEach(form => {
         form.addEventListener('submit', function(event) {
@@ -116,7 +116,7 @@ function highlightInvalidFields(form) {
     });
 }
 
-// Enhanced loading states
+// loading states
 function showLoading(element) {
     element.classList.add('loading');
     element.setAttribute('disabled', true);
@@ -143,7 +143,7 @@ async function loadContent(url, targetElement) {
     }
 }
 
-// Add animation class to elements when they come into view
+// Add animation class 
 const animateOnScroll = () => {
     const elements = document.querySelectorAll('.card, .feature-icon, .testimonial-card');
     elements.forEach(element => {
@@ -173,7 +173,7 @@ function initThemeSwitcher() {
     }
 }
 
-// Enhanced Form Validation
+//Form Validation
 function initFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
     forms.forEach(form => {
@@ -208,7 +208,7 @@ function validateInput(input) {
     }
 }
 
-// Add these initialization functions at the top of your file
+
 function initializeTooltips() {
     const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     tooltips.forEach(tooltip => {
@@ -249,7 +249,7 @@ function initializeAnimations() {
     window.addEventListener('scroll', animateOnScroll);
     window.addEventListener('load', animateOnScroll);
 
-    // Add animation classes to elements
+    // animation classes to elements
     document.querySelectorAll('.card, .feature-icon, .testimonial-card').forEach(element => {
         element.classList.add('animate-on-scroll');
     });
@@ -264,4 +264,3 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeAnimations();
 });
 
-// Add these features to your existing code

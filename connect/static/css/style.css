@@ -21,7 +21,7 @@ body {
     background-color: var(--body-bg);
 }
 
-/* Enhanced Navbar */
+/* Navbar */
 .navbar {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -49,7 +49,7 @@ body {
     background: url('/static/images/logo.png') no-repeat center/contain;
 }
 
-/* Enhanced Cards */
+/* Cards */
 .card {
     border: none;
     border-radius: 12px;
@@ -71,7 +71,7 @@ body {
     padding: 1.25rem;
 }
 
-/* Modern Buttons */
+/* Buttons */
 .btn {
     padding: 0.6rem 1.5rem;
     border-radius: 8px;
@@ -96,7 +96,7 @@ body {
     left: 100%;
 }
 
-/* Enhanced Form Elements */
+/* Form Elements */
 .form-control {
     border-radius: 8px;
     border: 2px solid #e9ecef;
@@ -109,7 +109,7 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
 }
 
-/* Modern Dashboard Elements */
+/* Dashboard Elements */
 .dashboard-card {
     background: white;
     border-radius: 12px;
@@ -137,7 +137,7 @@ body {
     margin-bottom: 0.5rem;
 }
 
-/* Enhanced Tables */
+/* Tables */
 .table {
     background: white;
     border-radius: 8px;
@@ -222,7 +222,7 @@ body {
     font-weight: bold;
 }
 
-/* Modern Input Groups */
+/* Input Groups */
 .input-group {
     position: relative;
     margin-bottom: 1.5rem;
@@ -320,7 +320,7 @@ body {
     color: var(--primary);
 }
 
-/* Enhanced Notifications */
+/* d Notifications */
 .notification-badge {
     position: relative;
 }
@@ -351,7 +351,7 @@ body {
     100% { background-position: -200% 0; }
 }
 
-/* Modern Scrollbar */
+/*  */
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -503,7 +503,7 @@ body {
     }
 }
 
-/* Add these to your existing styles */
+
 .earning-actions {
     text-align: center;
     padding: 1rem;

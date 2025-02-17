@@ -5,307 +5,232 @@
 
 {% block extra_css %}
 <style>
-/* Admin Dashboard Styles */
-.admin-container {
-    background-color: #f8f9fa;
-    min-height: calc(100vh - 60px);
-}
-
-.sidebar {
-    background: #2c3e50;
-    color: #fff;
-    min-height: calc(100vh - 60px);
-    padding: 20px 0;
-}
-
-.sidebar .nav-link {
-    color: #ecf0f1;
-    padding: 10px 20px;
-    transition: all 0.3s;
-}
-
-.sidebar .nav-link:hover {
-    background: #34495e;
-    padding-left: 25px;
-}
-
-.sidebar .nav-link i {
-    width: 25px;
-    margin-right: 10px;
-}
-
-.stats-card {
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    transition: transform 0.3s;
-}
-
-.stats-card:hover {
-    transform: translateY(-5px);
-}
-
-.stats-icon {
-    font-size: 2.5rem;
-    opacity: 0.8;
-}
-
-.stats-info h3 {
-    font-size: 1.8rem;
-    margin: 0;
-}
-
-.stats-info p {
-    margin: 0;
-    opacity: 0.8;
-}
-
-.activity-card {
-    border: none;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.activity-item {
-    padding: 15px;
-    border-bottom: 1px solid #eee;
-    transition: background-color 0.3s;
-}
-
-.activity-item:hover {
-    background-color: #f8f9fa;
-}
-
-.activity-item:last-child {
-    border-bottom: none;
-}
-
-.menu-section {
-    margin-bottom: 15px;
-}
-
-.menu-section h6 {
-    color: #95a5a6;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    padding: 10px 20px;
-    margin: 0;
-}
-
-.menu-item {
-    padding: 8px 30px;
-    color: #ecf0f1;
-    display: block;
-    text-decoration: none;
-    transition: all 0.3s;
-}
-
-.menu-item:hover {
-    background: #34495e;
-    color: #fff;
-    text-decoration: none;
-}
-
-.menu-item i {
-    margin-right: 10px;
-    width: 20px;
-    text-align: center;
-}
-
-/* Custom colors for stats cards */
-.bg-gradient-primary {
-    background: linear-gradient(45deg, #4e73df, #224abe);
-}
-
-.bg-gradient-success {
-    background: linear-gradient(45deg, #1cc88a, #13855c);
-}
-
-.bg-gradient-info {
-    background: linear-gradient(45deg, #36b9cc, #258391);
-}
-
-.bg-gradient-warning {
-    background: linear-gradient(45deg, #f6c23e, #dda20a);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .sidebar {
-        min-height: auto;
-    }
-    
-    .stats-card {
-        margin-bottom: 15px;
-    }
-}
-</style>
+    .admin-container {
+     background-color: #f8f9fa;
+     min-height: calc(100vh - 60px);
+     padding: 20px;
+ }
+ 
+ .sidebar {
+     background: #2c3e50;
+     color: #fff;
+     min-height: calc(100vh - 60px);
+     padding: 20px 0;
+ }
+ 
+ .sidebar .nav-link {
+     color: #ecf0f1;
+     padding: 10px 20px;
+     transition: all 0.3s;
+ }
+ 
+ .sidebar .nav-link:hover {
+     background: #34495e;
+     padding-left: 25px;
+ }
+ 
+ .sidebar .nav-link i {
+     width: 25px;
+     margin-right: 10px;
+ }
+ .sidebar {
+     background: #2c3e50;
+     color: #fff;
+     min-height: calc(100vh - 60px);
+     padding: 20px 0;
+     border-right: 3px solid #1abc9c;
+ }
+ .sidebar h4 {
+     text-align: center;
+     padding: 15px 0;
+     margin-bottom: 20px;
+     font-size: 1.4rem;
+     font-weight: 600;
+     text-transform: uppercase;
+     letter-spacing: 0.05rem;
+     border-bottom: 2px solid #1abc9c;
+ }
+ .sidebar a {
+     display: block;
+     padding: 12px 25px;
+     font-size: 1.1rem;
+     color: #ecf0f1;
+     text-decoration: none;
+     transition: all 0.3s;
+ }
+ .sidebar a:hover {
+     background: #34495e;
+     padding-left: 30px;
+ }
+ .sidebar a.active {
+     background: #1abc9c;
+     color: #fff;
+ }
+ 
+ .stats-card {
+     border: none;
+     border-radius: 10px;
+     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+     transition: transform 0.3s;
+     text-align: center;
+     padding: 20px;
+     color: white;
+     text-decoration: none;
+     display: block;
+ }
+ 
+ .stats-card:hover {
+     transform: translateY(-5px);
+     text-decoration: none;
+ }
+ 
+ .stats-icon {
+     font-size: 2.5rem;
+     opacity: 0.8;
+ }
+ 
+ .stats-info h3 {
+     font-size: 1.8rem;
+     margin: 0;
+ }
+ 
+ .stats-info p {
+     margin: 0;
+     opacity: 0.8;
+ }
+ 
+ .activity-card {
+     background: white;
+     border: none;
+     border-radius: 10px;
+     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+     padding: 15px;
+ }
+ 
+ .activity-item {
+     padding: 15px;
+     border-bottom: 1px solid #eee;
+     transition: background-color 0.3s;
+ }
+ 
+ .activity-item:hover {
+     background-color: #f8f9fa;
+ }
+ 
+ .activity-item:last-child {
+     border-bottom: none;
+ }
+ 
+ .badge {
+     font-size: 0.9rem;
+     padding: 5px 10px;
+     border-radius: 5px;
+ }
+ 
+ /* Gradient backgrounds */
+ .bg-gradient-primary {
+     background: linear-gradient(45deg, #4e73df, #224abe);
+ }
+ 
+ .bg-gradient-success {
+     background: linear-gradient(45deg, #1cc88a, #13855c);
+ }
+ 
+ .bg-gradient-info {
+     background: linear-gradient(45deg, #36b9cc, #258391);
+ }
+ 
+ .bg-gradient-warning {
+     background: linear-gradient(45deg, #f6c23e, #dda20a);
+ }
+ 
+ /* Responsive adjustments */
+ @media (max-width: 768px) {
+     .sidebar {
+         min-height: auto;
+     }
+     
+     .stats-card {
+         margin-bottom: 15px;
+     }
+ }
+ 
+ </style>
 {% endblock %}
 
 {% block content %}
 <div class="admin-container">
     <div class="row g-0">
-        <!-- Sidebar -->
         <div class="col-md-2 sidebar">
-            <div class="menu-section">
-                <h6>Main</h6>
-                <a href="{% url 'connect:admin_dashboard' %}" class="menu-item active">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <h6>Learning Hub</h6>
-                <a href="{% url 'connect:add_course' %}" class="menu-item">
-                    <i class="fas fa-book"></i> Courses
-                </a>
-                <a href="{% url 'connect:add_article' %}" class="menu-item">
-                    <i class="fas fa-newspaper"></i> Articles
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-folder"></i> Categories
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <h6>Users</h6>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-users"></i> All Users
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-store"></i> Sellers
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-shopping-bag"></i> Buyers
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-motorcycle"></i> Riders
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <h6>Marketplace</h6>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-shopping-cart"></i> Orders
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-box"></i> Products
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-money-bill"></i> Transactions
-                </a>
-            </div>
-
-            <div class="menu-section">
-                <h6>Settings</h6>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-cog"></i> General
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fas fa-bell"></i> Notifications
-                </a>
-            </div>
+            <h4>Admin Menu</h4>
+            <a href="#">Dashboard</a>
+            <a href="#">Users</a>
+            <a href="#">Orders</a>
+            <a href="#">Products</a>
         </div>
-
-        <!-- Main Content -->
+        
         <div class="col-md-10 p-4">
             <h2 class="mb-4">Dashboard Overview</h2>
             
-            <!-- Statistics Cards -->
             <div class="row mb-4">
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="stats-card bg-gradient-primary text-white p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="stats-info">
-                                <h3>{{ total_users }}</h3>
-                                <p>Total Users</p>
-                            </div>
-                            <i class="fas fa-users stats-icon"></i>
-                        </div>
-                    </div>
+                    <a href="#" class="stats-card bg-gradient-primary text-white p-3">
+                        <h3>{{ total_users }}</h3>
+                        <p>Total Users</p>
+                    </a>
                 </div>
-                
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="stats-card bg-gradient-success text-white p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="stats-info">
-                                <h3>{{ total_products }}</h3>
-                                <p>Products</p>
-                            </div>
-                            <i class="fas fa-box stats-icon"></i>
-                        </div>
-                    </div>
+                    <a href="{% url 'connect:marketplacehome' %}" class="stats-card bg-gradient-success text-white p-3">
+                        <h3>{{ total_products }}</h3>
+                        <p>Products</p>
+                    </a>
                 </div>
-                
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="stats-card bg-gradient-info text-white p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="stats-info">
-                                <h3>{{ total_orders }}</h3>
-                                <p>Orders</p>
-                            </div>
-                            <i class="fas fa-shopping-cart stats-icon"></i>
-                        </div>
-                    </div>
+                    <a href="#" class="stats-card bg-gradient-info text-white p-3">
+                        <h3>{{ total_orders }}</h3>
+                        <p>Orders</p>
+                    </a>
                 </div>
-                
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <div class="stats-card bg-gradient-warning text-white p-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="stats-info">
-                                <h3>KES {{ total_earnings }}</h3>
-                                <p>Total Earnings</p>
-                            </div>
-                            <i class="fas fa-dollar-sign stats-icon"></i>
-                        </div>
-                    </div>
+                    <a href="#" class="stats-card bg-gradient-warning text-white p-3">
+                        <h3>KES {{ total_earnings|floatformat:2 }}</h3>
+                        <p>Total Earnings</p>
+                    </a>
                 </div>
             </div>
-
-            <!-- Recent Activities -->
+            
             <div class="row">
                 <div class="col-md-6 mb-4">
                     <div class="activity-card">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">Recent Orders</h5>
+                        <h5>Recent Orders</h5>
+                        {% for order in recent_orders %}
+                        <div class="activity-item">
+                            <h6>Order #{{ order.id }}</h6>
+                            <small>{{ order.buyer.username }}</small>
+                            <span class="badge {% if order.delivery_status == 'DELIVERED' %}bg-success{% elif order.delivery_status == 'PENDING' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ order.delivery_status|title }}
+                            </span>
                         </div>
-                        <div class="card-body p-0">
-                            {% for order in recent_orders %}
-                            <div class="activity-item">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <h6 class="mb-1">Order #{{ order.id }}</h6>
-                                        <small class="text-muted">{{ order.buyer.username }}</small>
-                                    </div>
-                                    <span class="badge bg-success">{{ order.status }}</span>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                        {% empty %}
+                        <p class="text-muted">No recent orders</p>
+                        {% endfor %}
                     </div>
                 </div>
-
                 <div class="col-md-6 mb-4">
                     <div class="activity-card">
-                        <div class="card-header bg-white">
-                            <h5 class="mb-0">Recent Users</h5>
+                        <h5>Recent Users</h5>
+                        {% for user in recent_users %}
+                        <div class="activity-item">
+                            <h6>{{ user.username }}</h6>
+                            <small>Joined {{ user.date_joined|date:"M d, Y" }}</small>
                         </div>
-                        <div class="card-body p-0">
-                            {% for user in recent_users %}
-                            <div class="activity-item">
-                                <div class="d-flex align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">{{ user.username }}</h6>
-                                        <small class="text-muted">Joined {{ user.date_joined|date }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                        {% empty %}
+                        <p class="text-muted">No new users</p>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

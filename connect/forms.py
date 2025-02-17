@@ -4,6 +4,7 @@ from .models import Seller, Buyer, BodaRider
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
+
 # Comment Form (for adding comments)
 class CommentForm(forms.ModelForm):
     class Meta:
@@ -66,6 +67,13 @@ class NotificationForm(forms.ModelForm):
         model = Notification
         fields = ['message']
 
+
+class ContactForm(forms.Form):
+    name = forms.CharField(max_length=100, required=True)
+    email = forms.EmailField(required=True)
+    subject = forms.CharField(max_length=200, required=True)
+    message = forms.CharField(widget=forms.Textarea, required=True)
+
 # Seller Profile Form (for sellers to update their profiles)
 class SellerProfileForm(forms.ModelForm):
     class Meta:
@@ -83,10 +91,7 @@ class BodaRiderProfileForm(forms.ModelForm):
     class Meta:
         model = BodaRider
         fields = ['bike_model', 'license_number', 'location', 'phone_number']
-from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import User
-from .models import Seller, Buyer, BodaRider, Product, Order
+
 
 class CustomUserCreationForm(UserCreationForm):
     ROLE_CHOICES = [
@@ -138,8 +143,5 @@ class ProductForm(forms.ModelForm):
         }
 
 
-# Remove or update OrderForm since we're handling orders differently now
-# class OrderForm(forms.ModelForm):
-#     class Meta:
-#         model = Order
-#         fields = ['delivery_address']
+
+

@@ -66,6 +66,10 @@ urlpatterns = [
 
     # Admin Dashboard
     path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/admin/users/', views.admin_user_list, name='user_list'),
+    path('dashboard/admin/products/', views.admin_product_list, name='product_list'),
+    path('dashboard/admin/orders/', views.admin_order_list, name='order_list'),
+    path('dashboard/admin/earnings/', views.admin_earnings, name='earnings'),
 
     # Post
     path('post/<int:post_id>/like/', views.like_post, name='like_post'),
@@ -75,4 +79,10 @@ urlpatterns = [
 
     # Payment
     path('payment/<int:order_id>/', views.payment, name='payment'),
+     # Admin Dashboard - Remove decorators from here
+    path('dashboard/admin/', views.admin_dashboard, name='admin_dashboard'),
+    path('dashboard/admin/users/', views.admin_user_list, name='user_list'),
+    path('dashboard/admin/products/', views.admin_product_list, name='product_list'),
+    path('dashboard/admin/orders/', views.admin_order_list, name='order_list'),
+
 ]
