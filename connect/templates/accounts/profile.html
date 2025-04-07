@@ -1,4 +1,4 @@
-{% extends 'layout.html' %}
+{% extends 'connect/base.html' %}
 
 {% block content %}
 <div class="container mt-5">
@@ -11,17 +11,17 @@
             <p><strong>Company Name:</strong> {{ profile_data.company_name }}</p>
             <p><strong>Location:</strong> {{ profile_data.location }}</p>
             <p><strong>Phone:</strong> {{ profile_data.phone_number }}</p>
-            <a href="{% url 'editsellerprofile' %}" class="btn btn-success">Edit Profile</a>
+            <a href="{% url 'connect:editsellerprofile' %}" class="btn btn-success">Edit Profile</a>
         {% elif profile_type == 'Buyer' %}
             <p><strong>Address:</strong> {{ profile_data.address }}</p>
             <p><strong>Phone:</strong> {{ profile_data.phone_number }}</p>
-            <a href="{% url 'editbuyerprofile' %}" class="btn btn-success">Edit Profile</a>
+            <a href="{% url 'connect:editbuyerprofile' %}" class="btn btn-success">Edit Profile</a>
         {% elif profile_type == 'Boda Rider' %}
             <p><strong>Bike Model:</strong> {{ profile_data.bike_model }}</p>
             <p><strong>License Number:</strong> {{ profile_data.license_number }}</p>
             <p><strong>Location:</strong> {{ profile_data.location }}</p>
             <p><strong>Phone:</strong> {{ profile_data.phone_number }}</p>
-            <a href="{% url 'editbodariderprofile' %}" class="btn btn-success">Edit Profile</a>
+            <a href="{% url 'connect:editbodariderprofile' %}" class="btn btn-success">Edit Profile</a>
         {% endif %}
     </div>
 </div>

@@ -5,7 +5,7 @@
   <p>Update the details of your product below.</p>
 
   <!-- Edit Product Form -->
-  <form method="POST" action="{% url 'edit_product' product.id %}" enctype="multipart/form-data">
+  <form method="POST" action="{% url 'connect:edit_product' product.id %}" enctype="multipart/form-data">
     {% csrf_token %}
     <div class="form-group mb-3">
       <label for="name">Product Name:</label>
@@ -50,7 +50,7 @@
         {% for image in product.images.all %}
         <div class="me-3">
           <img src="{{ image.url }}" class="img-thumbnail" style="max-width: 100px;" alt="Product Image">
-          <a href="{% url 'delete_product_image' image.id %}" class="btn btn-sm btn-danger mt-1">Remove</a>
+          <a href="{% url 'connect:delete_product_image' image.id %}" class="btn btn-sm btn-danger mt-1">Remove</a>
         </div>
         {% endfor %}
       </div>
@@ -63,8 +63,8 @@
       <small class="text-muted">You can add up to 5 images in total.</small>
     </div>
 
-    <button type="submit" class="btn btn-success">Update Product</button>
-    <a href="{% url 'seller_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="{% url 'connect:sellerdashboard' %}" class="btn btn-secondary">Cancel</a>
   </form>
 </div>
 {% endblock %}

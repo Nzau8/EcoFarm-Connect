@@ -1,0 +1,51 @@
+<footer class="footer bg-light mt-auto py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h5>About EcoFarm Connect</h5>
+                <p>Connecting farmers, buyers, and communities for sustainable agriculture.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'connect:home' %}">Home</a></li>
+                    <li><a href="{% url 'connect:about' %}">About Us</a></li>
+                    <li><a href="{% url 'connect:marketplacehome' %}">Marketplace</a></li>
+                    <li><a href="{% url 'connect:learninghub' %}">Learning Hub</a></li>
+                    <li><a href="{% url 'connect:community_home' %}">Community</a></li>
+                    <li><a href="{% url 'connect:contact' %}">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Contact Us</h5>
+                <ul class="list-unstyled">
+                    <li><i class="bi bi-geo-alt"></i> Nairobi, Kenya</li>
+                    <li><i class="bi bi-telephone"></i> +254 700 000000</li>
+                    <li><i class="bi bi-envelope"></i> info@ecofarmconnect.com</li>
+                </ul>
+                <div class="social-links">
+                    <a href="#" class="me-2"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="me-2"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="me-2"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="me-2"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <p>&copy; {% now "Y" %} EcoFarm Connect. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-end">
+                <ul class="list-inline mb-0">
+                    <li class="list-inline-item">
+                        <a href="{% url 'connect:privacy_policy' %}">Privacy Policy</a>
+                    </li>
+                    <li class="list-inline-item">
+                        <a href="{% url 'connect:terms' %}">Terms of Service</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>

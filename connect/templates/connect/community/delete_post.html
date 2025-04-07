@@ -1,0 +1,60 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Delete Post</h5>
+    </div>
+    <div class="card-body">
+        <p class="mb-4">Are you sure you want to delete this post? This action cannot be undone.</p>
+        
+        <div class="post-preview mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h6>Post Content:</h6>
+                    <p>{{ post.content }}</p>
+                    {% if post.media %}
+                        <div class="post-media">
+                            {% if post.media_type == 'IMAGE' %}
+                                <img src="{{ post.media.url }}" alt="Post media" class="img-fluid rounded">
+                            {% elif post.media_type == 'VIDEO' %}
+                                <video src="{{ post.media.url }}" controls class="img-fluid rounded"></video>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="d-flex gap-2">
+            {% csrf_token %}
+            <a href="{% url 'connect:post_detail' post_id=post.id %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-danger">Delete Post</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .post-preview {
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        background-color: #f8f9fa;
+    }
+    
+    .post-media {
+        max-height: 300px;
+        overflow: hidden;
+        margin-top: 1rem;
+    }
+    
+    .post-media img,
+    .post-media video {
+        max-height: 300px;
+        object-fit: contain;
+    }
+</style>
+{% endblock %} 

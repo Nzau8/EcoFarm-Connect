@@ -1,0 +1,221 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="hashtag-header mb-4">
+    <h2>#{{ hashtag.name }}</h2>
+    <p class="text-muted">{{ posts.paginator.count }} posts</p>
+</div>
+
+<div class="posts-container">
+    {% for post in posts %}
+        <div class="post-card mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="post-header d-flex align-items-center mb-3">
+                        {% if post.author.profile.profile_picture %}
+                            <img src="{{ post.author.profile.profile_picture.url }}" 
+                                 alt="{{ post.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'connect/images/default_profile.png' %}" 
+                                 alt="{{ post.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">
+                                <a href="{% url 'connect:profile' username=post.author.username %}" 
+                                   class="text-decoration-none">
+                                    {{ post.author.get_full_name|default:post.author.username }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">
+                                {{ post.created_at|timesince }} ago
+                                {% if post.group %}
+                                    in <a href="{% url 'connect:group_detail' group_id=post.group.id %}">
+                                        {{ post.group.name }}
+                                    </a>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="post-content">
+                        <p>{{ post.content }}</p>
+                        {% if post.media %}
+                            <div class="post-media mb-3">
+                                {% if post.media_type == 'IMAGE' %}
+                                    <img src="{{ post.media.url }}" alt="Post media" class="img-fluid rounded">
+                                {% elif post.media_type == 'VIDEO' %}
+                                    <video src="{{ post.media.url }}" controls class="img-fluid rounded"></video>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="post-hashtags mb-3">
+                        {% for tag in post.hashtags.all %}
+                            <a href="{% url 'connect:hashtag' name=tag.name %}" 
+                               class="badge bg-light text-dark text-decoration-none me-1">
+                                #{{ tag.name }}
+                            </a>
+                        {% endfor %}
+                    </div>
+
+                    <div class="post-actions d-flex align-items-center">
+                        <div class="reactions me-3">
+                            {% for reaction_type, reaction_label in post.REACTION_CHOICES %}
+                                <button class="btn btn-sm btn-light me-1 reaction-btn"
+                                        onclick="toggleReaction('{{ post.id }}', '{{ reaction_type }}')">
+                                    {{ reaction_label }}
+                                    <span class="reaction-count" data-reaction="{{ reaction_type }}">
+                                        {{ post.get_reaction_count:reaction_type }}
+                                    </span>
+                                </button>
+                            {% endfor %}
+                        </div>
+                        <a href="{% url 'connect:post_detail' post_id=post.id %}" 
+                           class="btn btn-sm btn-light">
+                            <i class="bi bi-chat"></i>
+                            {{ post.comments.count }} Comments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="text-center py-5">
+            <i class="bi bi-hash display-1 text-muted"></i>
+            <h4 class="mt-3">No posts found with #{{ hashtag.name }}</h4>
+            <p class="text-muted">Be the first to use this hashtag!</p>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                <i class="bi bi-plus-circle"></i> Create Post
+            </button>
+        </div>
+    {% endfor %}
+
+    {% if posts.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if posts.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                {% for num in posts.paginator.page_range %}
+                    {% if posts.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if posts.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ posts.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .hashtag-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+
+    .hashtag-header h2 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .hashtag-header p {
+        margin: 0.5rem 0 0;
+        opacity: 0.8;
+    }
+
+    .post-card {
+        transition: transform 0.2s;
+    }
+
+    .post-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .post-media {
+        max-height: 400px;
+        overflow: hidden;
+        border-radius: 0.5rem;
+    }
+
+    .post-media img,
+    .post-media video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .reaction-btn {
+        transition: all 0.2s;
+    }
+
+    .reaction-btn:hover {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .reaction-btn.active {
+        background-color: var(--primary);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function toggleReaction(postId, reactionType) {
+        fetch(`/community/post/${postId}/react/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                reaction_type: reactionType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update reaction counts
+            Object.entries(data.reaction_counts).forEach(([type, count]) => {
+                document.querySelector(`[data-reaction="${type}"]`).textContent = count;
+            });
+            
+            // Toggle active state on button
+            const button = event.target.closest('.reaction-btn');
+            if (data.action === 'added') {
+                button.classList.add('active');
+            } else if (data.action === 'removed') {
+                button.classList.remove('active');
+            }
+        });
+    }
+</script>
+{% endblock %} 

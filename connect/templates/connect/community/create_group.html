@@ -1,0 +1,126 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Create New Group</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">Group Name</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Describe what your group is about and what members can expect.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.cover_image.id_for_label }}" class="form-label">Cover Image</label>
+                            {{ form.cover_image }}
+                            {% if form.cover_image.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.cover_image.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Upload a cover image for your group (optional).</div>
+                            <div id="coverPreview" class="mt-2" style="display: none;">
+                                <img id="preview" src="" alt="Cover preview" class="img-fluid rounded">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="form-check">
+                                {{ form.is_private }}
+                                <label class="form-check-label" for="{{ form.is_private.id_for_label }}">
+                                    Make this group private
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Private groups require member approval and are only visible to members.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create Group</button>
+                            <a href="{% url 'connect:groups' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Preview cover image before upload
+    document.getElementById('{{ form.cover_image.id_for_label }}').addEventListener('change', function(e) {
+        const preview = document.getElementById('preview');
+        const previewDiv = document.getElementById('coverPreview');
+        
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                previewDiv.style.display = 'block';
+            }
+            
+            reader.readAsDataURL(this.files[0]);
+        } else {
+            preview.src = '';
+            previewDiv.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    #coverPreview {
+        max-height: 200px;
+        overflow: hidden;
+    }
+    
+    #coverPreview img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .form-check {
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %} 

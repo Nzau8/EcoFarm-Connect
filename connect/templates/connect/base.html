@@ -12,6 +12,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <link rel="icon" type="image/png" href="{% static 'connect/images/favicon.png' %}">
+    <style>
+        .hover-shadow {
+            transition: all 0.3s ease;
+        }
+        
+        .hover-shadow:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-link {
+            color: inherit;
+        }
+        
+        .card-link:hover {
+            color: inherit;
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            color: #28a745;
+            margin-bottom: 1rem;
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -39,7 +63,7 @@
                         <a class="nav-link" href="{% url 'connect:learninghub' %}">Learning Hub</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'connect:communityhome' %}">Community</a>
+                        <a class="nav-link" href="{% url 'connect:community_home' %}">Community</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
@@ -106,7 +130,7 @@
     <!-- Footer -->
     <footer class="footer mt-auto py-3 bg-light">
         <div class="container text-center">
-            <span class="text-muted">© 2024 Connect Platform. All rights reserved.</span>
+            <span class="text-muted">© 2025 Connect Platform. All rights reserved.</span>
         </div>
     </footer>
 
@@ -114,4 +138,4 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block extra_js %}{% endblock %}
 </body>
-</html> 
+</html>

@@ -1,66 +1,29 @@
 {% extends 'connect/base.html' %}
 {% load static %}
-{% load custom_filters %}
-
-{% block title %}Learning Hub - Connect{% endblock %}
 
 {% block content %}
-<div class="learning-hub">
+<div class="container py-4">
     <!-- Hero Section -->
-    <section class="learning-hero glass-card">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h1 class="gradient-text mb-4">Welcome to Learning Hub</h1>
-                    <p class="lead mb-4">Enhance your farming knowledge with our curated courses and expert-led content.</p>
-                    <div class="search-box mb-4">
-                        <div class="input-group">
-                            <span class="input-group-icon">
-                                <i class="bi bi-search"></i>
-                            </span>
-                            <input type="text" class="form-control" placeholder="Search courses...">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <div class="hero-illustration">
-                        <div class="icon-grid">
-                            <div class="icon-item">
-                                <i class="bi bi-book text-primary display-4"></i>
-                            </div>
-                            <div class="icon-item">
-                                <i class="bi bi-people text-success display-4"></i>
-                            </div>
-                            <div class="icon-item">
-                                <i class="bi bi-lightbulb text-warning display-4"></i>
-                            </div>
-                            <div class="icon-item">
-                                <i class="bi bi-graph-up text-info display-4"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <div class="learning-hero text-center mb-5">
+        <h1>Learning Hub</h1>
+        <p class="lead">Enhance your farming knowledge with our expert-led courses and resources</p>
+    </div>
 
-    <!-- Categories Section -->
-    <section class="py-5">
+    <!-- Course Categories -->
+    <section class="mb-5">
         <div class="container">
-            <h2 class="section-title mb-4">Browse by Category</h2>
-            <div class="row g-4">
+            <h2 class="section-title mb-4">Course Categories</h2>
+            <div class="row">
                 {% for category in categories %}
-                <div class="col-md-4">
+                <div class="col-md-4 mb-4">
                     <div class="category-card hover-card">
-                        <div class="category-icon">
-                            <i class="bi bi-book"></i>
-                        </div>
                         <h3>{{ category.name }}</h3>
                         <p>{{ category.description|truncatewords:15 }}</p>
                         <div class="progress mb-3">
-                            <div class="progress-bar" style="width: {{ category.courses.count|multiply:10 }}%"></div>
+                            <div class="progress-bar bg-success" style="width: {{ category.course_count_percentage }}%"></div>
                         </div>
                         <span class="course-count">{{ category.courses.count }} Courses</span>
+                        <a href="{% url 'connect:course_category' category.slug %}" class="stretched-link"></a>
                     </div>
                 </div>
                 {% endfor %}
@@ -69,250 +32,145 @@
     </section>
 
     <!-- Featured Courses -->
-    <section class="py-5 bg-light">
+    <section class="mb-5">
         <div class="container">
             <h2 class="section-title mb-4">Featured Courses</h2>
-            <div class="row g-4">
+            <div class="row">
                 {% for course in featured_courses %}
-                <div class="col-md-4">
-                    <div class="course-card hover-card">
+                <div class="col-md-4 mb-4">
+                    <div class="course-card">
                         {% if course.image %}
-                            <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                        <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
                         {% else %}
-                            <img src="{% static 'images/default-course.jpg' %}" class="card-img-top" alt="Default Course Image">
+                        <img src="{% static 'connect/images/default-course.jpg' %}" class="card-img-top" alt="Default Course Image">
                         {% endif %}
                         <div class="card-body">
-                            <div class="course-level">{{ course.level }}</div>
-                            <h4 class="card-title">{{ course.title }}</h4>
+                            <h5 class="card-title">{{ course.title }}</h5>
                             <p class="card-text">{{ course.description|truncatewords:20 }}</p>
                             <div class="course-meta">
-                                <span><i class="bi bi-clock"></i> {{ course.duration }}</span>
-                                <span><i class="bi bi-person"></i> {{ course.instructor }}</span>
+                                <span class="badge bg-success">{{ course.category.name }}</span>
+                                <span class="badge bg-primary">{{ course.level }}</span>
                             </div>
-                            <a href="{% url 'connect:coursedetails' course.id %}" class="btn btn-primary mt-3">View Course</a>
+                            <div class="mt-3">
+                                <a href="{% url 'connect:coursedetails' course.id %}" class="btn btn-outline-success">
+                                    View Course
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
-        </div>
-    </section>
-
-    <!-- Learning Stats -->
-    <section class="py-5">
-        <div class="container">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="stats-card text-center">
-                        <i class="bi bi-book-half stats-icon"></i>
-                        <h3 class="stats-number">{{ total_courses }}</h3>
-                        <p class="stats-label">Total Courses</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stats-card text-center">
-                        <i class="bi bi-people stats-icon"></i>
-                        <h3 class="stats-number counter">{{ total_learners }}</h3>
-                        <p class="stats-label">Active Learners</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stats-card text-center">
-                        <i class="bi bi-newspaper stats-icon"></i>
-                        <h3 class="stats-number">{{ latest_articles.count }}</h3>
-                        <p class="stats-label">Published Articles</p>
-                    </div>
-                </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'connect:courses' %}" class="btn btn-success">View All Courses</a>
             </div>
         </div>
     </section>
 
-    <!-- Articles Section -->
-    <section class="articles-section py-5">
+    <!-- Latest Resources -->
+    <section class="mb-5">
         <div class="container">
-            <h2 class="section-title mb-4">Latest Articles</h2>
-            <div class="row g-4">
-                {% for article in latest_articles %}
-                <div class="col-md-4">
-                    <div class="article-card hover-card">
-                        {% if article.image %}
-                            <img src="{{ article.image.url }}" class="card-img-top" alt="{{ article.title }}">
-                        {% else %}
-                            <img src="{% static 'images/default-article.jpg' %}" class="card-img-top" alt="Default Article Image">
-                        {% endif %}
+            <h2 class="section-title mb-4">Latest Resources</h2>
+            <div class="row">
+                {% for resource in latest_resources %}
+                <div class="col-md-4 mb-4">
+                    <div class="resource-card">
                         <div class="card-body">
-                            <div class="article-meta">
-                                <span class="category-badge">{{ article.category.name }}</span>
-                                <span class="date">{{ article.created_at|date:"M d, Y" }}</span>
+                            <h5 class="card-title">{{ resource.title }}</h5>
+                            <p class="card-text">{{ resource.description|truncatewords:15 }}</p>
+                            <div class="resource-meta">
+                                <span class="badge bg-info">{{ resource.type }}</span>
+                                <small class="text-muted">{{ resource.created_at|timesince }} ago</small>
                             </div>
-                            <h4 class="card-title">{{ article.title }}</h4>
-                            <p class="card-text">{{ article.content|truncatewords:20 }}</p>
-                            <div class="article-footer">
-                                <div class="author">
-                                    <i class="bi bi-person-circle"></i>
-                                    {{ article.author.get_full_name|default:article.author.username }}
-                                </div>
-                                <div class="views">
-                                    <i class="bi bi-eye"></i>
-                                    {{ article.views }} views
-                                </div>
+                            <div class="mt-3">
+                                <a href="{% url 'connect:resource_detail' resource.id %}" class="btn btn-outline-primary">
+                                    View Resource
+                                </a>
                             </div>
-                            <a href="#" class="btn btn-outline-primary mt-3">Read More</a>
                         </div>
                     </div>
                 </div>
                 {% endfor %}
             </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'connect:resources' %}" class="btn btn-primary">View All Resources</a>
+            </div>
         </div>
     </section>
 
-    <!-- Add this near the top of the content section if user is admin -->
-    {% if is_admin %}
-    <div class="admin-controls mb-4">
-        <div class="d-flex gap-2">
-            <a href="{% url 'connect:add_article' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Article
-            </a>
-            <a href="{% url 'connect:add_course' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Course
-            </a>
+    {% if request.user.is_authenticated %}
+    <!-- Learning Progress -->
+    <section class="mb-5">
+        <div class="container">
+            <h2 class="section-title mb-4">Your Learning Progress</h2>
+            {% if enrolled_courses %}
+            <div class="row">
+                {% for enrollment in enrolled_courses %}
+                <div class="col-md-6 mb-4">
+                    <div class="progress-card">
+                        <h5>{{ enrollment.course.title }}</h5>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-success" style="width: {{ enrollment.progress }}%">
+                                {{ enrollment.progress }}%
+                            </div>
+                        </div>
+                        <a href="{% url 'connect:continue_course' enrollment.course.id %}" 
+                           class="btn btn-outline-success btn-sm">
+                            Continue Learning
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center">
+                <p>You haven't enrolled in any courses yet.</p>
+                <a href="{% url 'connect:courses' %}" class="btn btn-success">Browse Courses</a>
+            </div>
+            {% endif %}
         </div>
-    </div>
+    </section>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Learning Hub Specific Styles */
-    .learning-hero {
-        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(33, 136, 56, 0.1) 100%);
-        border-radius: 0 0 50px 50px;
-        margin-bottom: 3rem;
-    }
+.learning-hero {
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                url('{% static "connect/images/learning-hero.jpg" %}') center/cover;
+    color: white;
+    padding: 100px 0;
+    margin-top: -24px;
+    margin-bottom: 50px;
+}
 
-    .category-card {
-        background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        text-align: center;
-    }
+.category-card, .course-card, .resource-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 20px;
+    height: 100%;
+    transition: transform 0.3s ease;
+}
 
-    .category-icon {
-        font-size: 2.5rem;
-        color: var(--primary);
-        margin-bottom: 1rem;
-    }
+.category-card:hover, .course-card:hover, .resource-card:hover {
+    transform: translateY(-5px);
+}
 
-    .course-card {
-        border-radius: 15px;
-        overflow: hidden;
-    }
+.progress-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-    .course-level {
-        display: inline-block;
-        padding: 0.25rem 1rem;
-        background: var(--primary);
-        color: white;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        margin-bottom: 1rem;
-    }
+.course-meta, .resource-meta {
+    margin: 10px 0;
+}
 
-    .course-meta {
-        display: flex;
-        justify-content: space-between;
-        color: var(--secondary);
-        font-size: 0.875rem;
-    }
-
-    .course-meta span i {
-        margin-right: 0.5rem;
-    }
-
-    .stats-card {
-        background: white;
-        padding: 2rem;
-        border-radius: 15px;
-        transition: var(--transition);
-    }
-
-    .stats-card:hover {
-        transform: translateY(-5px);
-    }
-
-    .stats-icon {
-        font-size: 2.5rem;
-        color: var(--primary);
-        margin-bottom: 1rem;
-    }
-
-    .stats-number {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 0.5rem;
-    }
-
-    .stats-label {
-        color: var(--secondary);
-        font-size: 1.1rem;
-    }
-
-    .section-title {
-        position: relative;
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
-    }
-
-    .section-title::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 50px;
-        height: 3px;
-        background: var(--primary);
-    }
-
-    .hero-illustration {
-        padding: 2rem;
-    }
-
-    .icon-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 2rem;
-        max-width: 400px;
-        margin: 0 auto;
-    }
-
-    .icon-item {
-        background: white;
-        padding: 2rem;
-        border-radius: 1rem;
-        text-align: center;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease;
-    }
-
-    .icon-item:hover {
-        transform: translateY(-5px);
-    }
-
-    .icon-item i {
-        font-size: 3rem;
-    }
-
-    @media (max-width: 768px) {
-        .icon-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
-        }
-        
-        .icon-item {
-            padding: 1.5rem;
-        }
-    }
+.badge {
+    margin-right: 5px;
+}
 </style>
 {% endblock %}

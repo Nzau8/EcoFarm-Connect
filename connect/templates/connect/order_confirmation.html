@@ -1,13 +1,90 @@
 {% extends 'connect/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container py-4">
-    <h2>Order Confirmation</h2>
-    <p>Thank you for your order!</p>
-    <h4>Order ID: {{ order.id }}</h4>
-    <p>Delivery Method: {{ order.delivery_method }}</p>
-    <p>Delivery Fee: KES {{ order.delivery_fee }}</p>
-    <p>Total Amount: KES {{ order.total_price }}</p>
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h2 class="mb-0">Order Confirmation</h2>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-success" role="alert">
+                <h4 class="alert-heading">Thank you for your order!</h4>
+                <p>Your order has been successfully placed. You will receive updates about your order status.</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h4>Order Details</h4>
+                    <p><strong>Order ID:</strong> #{{ order.id }}</p>
+                    <p><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+                    <p><strong>Total Amount:</strong> KES {{ order.total_price }}</p>
+                    <p><strong>Payment Status:</strong> {{ order.get_payment_status_display }}</p>
+                </div>
+                
+                <div class="col-md-6">
+                    <h4>Delivery Information</h4>
+                    <p><strong>Delivery Method:</strong> {{ order.get_delivery_method_display }}</p>
+                    {% if order.delivery_method == 'SELLER' %}
+                        <p><strong>Seller:</strong> {{ order.seller.company_name }}</p>
+                    {% elif order.delivery_method == 'BODA' %}
+                        {% if order.assigned_rider %}
+                            <p><strong>Assigned Rider:</strong> {{ order.assigned_rider.user.get_full_name }}</p>
+                            <p><strong>Rider Contact:</strong> {{ order.assigned_rider.phone_number }}</p>
+                        {% else %}
+                            <p><em>A rider will be assigned to your order shortly.</em></p>
+                        {% endif %}
+                    {% endif %}
+                    <p><strong>Delivery Status:</strong> {{ order.get_delivery_status_display }}</p>
+                    {% if order.delivery_address %}
+                        <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
+                    {% endif %}
+                    {% if order.delivery_instructions %}
+                        <p><strong>Delivery Instructions:</strong> {{ order.delivery_instructions }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <h4>Order Items</h4>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.orderitem_set.all %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>KES {{ item.product.price }}</td>
+                                <td>KES {{ item.product.price|multiply:item.quantity }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Delivery Fee:</strong></td>
+                                <td>KES {{ order.delivery_fee }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                <td><strong>KES {{ order.total_price }}</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <a href="{% url 'connect:marketplacehome' %}" class="btn btn-outline-success">Continue Shopping</a>
+                <a href="{% url 'connect:buyerorders' %}" class="btn btn-success">View My Orders</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %} 

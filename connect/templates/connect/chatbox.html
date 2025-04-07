@@ -1,76 +1,231 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container mt-4">
-  <h3>Chatbox</h3>
-  <p>Communicate with buyers, sellers, or delivery personnel in real time.</p>
+<div class="container py-4">
+    <div class="chat-container">
+        <div class="row">
+            <!-- Chat List -->
+            <div class="col-md-4">
+                <div class="card chat-list-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Messages</h5>
+                    </div>
+                    <div class="chat-list">
+                        {% for chat in chats %}
+                        <a href="{% url 'connect:chat_detail' chat.id %}" 
+                           class="chat-item {% if chat.id == current_chat.id %}active{% endif %}">
+                            <div class="d-flex align-items-center">
+                                {% if chat.other_user.profile_picture %}
+                                <img src="{{ chat.other_user.profile_picture.url }}" 
+                                     alt="{{ chat.other_user.username }}" class="chat-avatar">
+                                {% endif %}
+                                <div class="chat-info">
+                                    <h6 class="mb-1">{{ chat.other_user.get_full_name|default:chat.other_user.username }}</h6>
+                                    <small class="text-muted">
+                                        {% if chat.last_message %}
+                                            {{ chat.last_message.created_at|timesince }} ago
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% if chat.unread_count %}
+                                <span class="badge bg-success ms-auto">{{ chat.unread_count }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        {% empty %}
+                        <div class="text-center p-3">
+                            <p class="text-muted">No messages yet</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
 
-  <!-- Chat Interface -->
-  <div class="card">
-    <div class="card-header bg-success text-white">
-      Chat with {{ chat_partner.username }}
-    </div>
-    <div class="card-body chatbox-body" id="chatboxBody">
-      <ul id="messageList" class="list-unstyled">
-        {% for message in messages %}
-        <li class="mb-2 {% if message.sender == request.user %}text-end{% else %}text-start{% endif %}">
-          <span class="badge bg-secondary">{{ message.sender.username }}</span>
-          <p class="d-inline-block p-2 rounded {% if message.sender == request.user %}bg-success text-white{% else %}bg-light{% endif %}">
-            {{ message.text }}
-          </p>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
-    <div class="card-footer">
-      <form id="messageForm">
-        <div class="input-group">
-          <input type="text" id="messageInput" class="form-control" placeholder="Type your message here..." required>
-          <button type="submit" class="btn btn-success">Send</button>
+            <!-- Chat Messages -->
+            <div class="col-md-8">
+                <div class="card chat-messages-card">
+                    {% if current_chat %}
+                    <div class="card-header">
+                        <div class="d-flex align-items-center">
+                            {% if current_chat.other_user.profile_picture %}
+                            <img src="{{ current_chat.other_user.profile_picture.url }}" 
+                                 alt="{{ current_chat.other_user.username }}" 
+                                 class="chat-avatar me-2">
+                            {% endif %}
+                            <h5 class="mb-0">
+                                {{ current_chat.other_user.get_full_name|default:current_chat.other_user.username }}
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        {% for message in messages %}
+                        <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                            <div class="message-content">
+                                {{ message.content }}
+                                <small class="message-time">{{ message.created_at|date:"g:i A" }}</small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center p-4">
+                            <p class="text-muted">No messages yet. Start the conversation!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer">
+                        <form id="messageForm" method="post" action="{% url 'connect:send_message' current_chat.id %}">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" name="content" class="form-control" 
+                                       placeholder="Type your message..." required>
+                                <button type="submit" class="btn btn-success">Send</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="text-center p-5">
+                        <p>Select a chat to start messaging</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </form>
     </div>
-  </div>
 </div>
+{% endblock %}
 
+{% block extra_css %}
+<style>
+.chat-container {
+    min-height: 70vh;
+}
+
+.chat-list-card {
+    height: 70vh;
+}
+
+.chat-list {
+    overflow-y: auto;
+    max-height: calc(70vh - 56px);
+}
+
+.chat-messages-card {
+    height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.chat-item {
+    display: block;
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.3s;
+}
+
+.chat-item:hover,
+.chat-item.active {
+    background-color: #f8f9fa;
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 1rem;
+}
+
+.message {
+    margin-bottom: 1rem;
+    display: flex;
+}
+
+.message.sent {
+    justify-content: flex-end;
+}
+
+.message-content {
+    max-width: 70%;
+    padding: 0.75rem;
+    border-radius: 1rem;
+    position: relative;
+}
+
+.message.sent .message-content {
+    background-color: #28a745;
+    color: white;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.message.received .message-content {
+    background-color: #f0f2f5;
+    border-bottom-left-radius: 0.25rem;
+}
+
+.message-time {
+    display: block;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    opacity: 0.8;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
 <script>
-  const chatSocket = new WebSocket(
-    'ws://' + window.location.host + '/ws/chat/{{ chat_room }}/'
-  );
-
-  const messageInput = document.getElementById('messageInput');
-  const messageForm = document.getElementById('messageForm');
-  const messageList = document.getElementById('messageList');
-
-  // Listen for new messages
-  chatSocket.onmessage = function (e) {
-    const data = JSON.parse(e.data);
-    const li = document.createElement('li');
-    li.className = "mb-2 text-start";
-    if (data.sender === "{{ request.user.username }}") {
-      li.className = "mb-2 text-end";
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-    li.innerHTML = `
-      <span class="badge bg-secondary">${data.sender}</span>
-      <p class="d-inline-block p-2 rounded bg-light">${data.message}</p>
+});
+
+// WebSocket setup for real-time messages
+{% if current_chat %}
+const chatSocket = new WebSocket(
+    'ws://' + window.location.host + '/ws/chat/{{ current_chat.id }}/'
+);
+
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    const chatMessages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${data.sender === '{{ request.user.username }}' ? 'sent' : 'received'}`;
+    
+    messageDiv.innerHTML = `
+        <div class="message-content">
+            ${data.message}
+            <small class="message-time">${data.timestamp}</small>
+        </div>
     `;
-    messageList.appendChild(li);
-    messageList.scrollTop = messageList.scrollHeight;
-  };
+    
+    chatMessages.appendChild(messageDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+};
 
-  // Send a new message
-  messageForm.addEventListener('submit', function (e) {
-    e.preventDefault();
-    const message = messageInput.value;
-    chatSocket.send(JSON.stringify({
-      'message': message,
-      'sender': "{{ request.user.username }}"
-    }));
-    messageInput.value = '';
-  });
-
-  // Handle connection closure
-  chatSocket.onclose = function (e) {
+chatSocket.onclose = function(e) {
     console.error('Chat socket closed unexpectedly');
-  };
+};
+
+const messageForm = document.getElementById('messageForm');
+messageForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const messageInput = this.querySelector('input[name="content"]');
+    const message = messageInput.value;
+    
+    chatSocket.send(JSON.stringify({
+        'message': message
+    }));
+    
+    messageInput.value = '';
+});
+{% endif %}
 </script>
 {% endblock %}

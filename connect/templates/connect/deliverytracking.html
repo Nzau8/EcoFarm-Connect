@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
 {% block content %}
 <div class="container mt-4">
   <h3>Order Delivery Tracking</h3>
@@ -24,32 +24,35 @@
       Delivery Status
     </div>
     <div class="card-body">
-      <p><strong>Current Status:</strong> {{ order.delivery_status }}</p>
-      <p><strong>Estimated Delivery Time:</strong> {{ order.estimated_delivery_time }}</p>
       <div class="progress">
-        <div 
-          class="progress-bar bg-success" 
-          role="progressbar" 
-          style="width: {{ order.delivery_progress }}%;"
-          aria-valuenow="{{ order.delivery_progress }}"
-          aria-valuemin="0" 
-          aria-valuemax="100">
-          {{ order.delivery_progress }}%
+        <div class="progress-bar {{ order.get_progress_class }}" role="progressbar" 
+             style="width: {{ order.get_progress_percentage }}%" 
+             aria-valuenow="{{ order.get_progress_percentage }}" 
+             aria-valuemin="0" aria-valuemax="100">
+          {{ order.delivery_status }}
         </div>
+      </div>
+      
+      <div class="mt-3">
+        <p><strong>Current Status:</strong> {{ order.get_delivery_status_display }}</p>
+        {% if order.assigned_rider %}
+          <p><strong>Rider:</strong> {{ order.assigned_rider.user.username }}</p>
+          <p><strong>Rider Contact:</strong> {{ order.assigned_rider.phone_number }}</p>
+          <a href="{% url 'connect:chat_with_rider' order.id %}" class="btn btn-success">
+            Chat with Rider
+          </a>
+        {% else %}
+          <p>A rider will be assigned to your delivery soon.</p>
+        {% endif %}
       </div>
     </div>
   </div>
 
-  <!-- Delivery Personnel Details -->
-  <div class="card mb-4">
-    <div class="card-header bg-info text-white">
-      Assigned Delivery Personnel
-    </div>
-    <div class="card-body">
-      <p><strong>Name:</strong> {{ order.delivery_person.name }}</p>
-      <p><strong>Contact:</strong> {{ order.delivery_person.contact }}</p>
-      <a href="{% url 'chat_with_delivery_person' order.delivery_person.id %}" class="btn btn-primary">Message Boda Rider</a>
-    </div>
+  <!-- Back Button -->
+  <div class="text-center">
+    <a href="{% url 'connect:order_details' order.id %}" class="btn btn-outline-success">
+      Back to Order Details
+    </a>
   </div>
 </div>
 {% endblock %}

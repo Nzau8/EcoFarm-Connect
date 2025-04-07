@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
 {% block content %}
 <div class="container mt-4">
   <h3>Chat with Boda Rider</h3>
@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="card-footer">
-      <form method="POST" action="{% url 'send_boda_message' chat.id %}">
+      <form method="POST" action="{% url 'connect:send_boda_message' chat.id %}">
         {% csrf_token %}
         <div class="input-group">
           <input type="text" name="message" class="form-control" placeholder="Type a message..." required>
@@ -32,7 +32,7 @@
   </div>
 
   <div class="mt-4 text-center">
-    <a href="{% url 'order_details' order.id %}" class="btn btn-outline-success">Back to Order Details</a>
+    <a href="{% url 'connect:order_details' order.id %}" class="btn btn-outline-success">Back to Order Details</a>
   </div>
 </div>
 {% endblock %}

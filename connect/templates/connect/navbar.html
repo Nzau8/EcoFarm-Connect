@@ -1,0 +1,137 @@
+<!-- Main Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'connect:home' %}">EcoFarm Connect</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#navbarNav" aria-controls="navbarNav" 
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" 
+                       href="{% url 'connect:home' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'marketplacehome' %}active{% endif %}" 
+                       href="{% url 'connect:marketplacehome' %}">Marketplace</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'learninghub' %}active{% endif %}" 
+                       href="{% url 'connect:learninghub' %}">Learning Hub</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if request.resolver_match.url_name == 'community_home' %}active{% endif %}" 
+                       href="{% url 'connect:community_home' %}">Community</a>
+                </li>
+            </ul>
+
+            <!-- User Menu -->
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <!-- Notifications -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{% url 'connect:notifications' %}">
+                            <i class="bi bi-bell"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_notifications_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+
+                    <!-- Cart -->
+                    <li class="nav-item">
+                        <a class="nav-link position-relative" href="{% url 'connect:cart' %}">
+                            <i class="bi bi-cart"></i>
+                            {% if cart_items_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
+                                {{ cart_items_count }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+
+                    <!-- Messages -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'connect:messages' %}">
+                            <i class="bi bi-chat"></i>
+                        </a>
+                    </li>
+
+                    <!-- User Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.username }}" 
+                                     class="rounded-circle me-1" style="width: 24px; height: 24px;">
+                            {% else %}
+                                <i class="bi bi-person-circle"></i>
+                            {% endif %}
+                            {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            {% if user.seller %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'connect:sellerdashboard' %}">
+                                        <i class="bi bi-shop"></i> Seller Dashboard
+                                    </a>
+                                </li>
+                            {% elif user.buyer %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'connect:buyerdashboard' %}">
+                                        <i class="bi bi-person"></i> Buyer Dashboard
+                                    </a>
+                                </li>
+                            {% elif user.bodarider %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'connect:bodariderdashboard' %}">
+                                        <i class="bi bi-bicycle"></i> Rider Dashboard
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            <li>
+                                <a class="dropdown-item" href="{% url 'connect:profile' username=user.username %}">
+                                    <i class="bi bi-person-circle"></i> Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'connect:settings' %}">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'connect:logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'connect:login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'connect:signup' %}">Sign Up</a>
+                    </li>
+                {% endif %}
+            </ul>
+
+            <!-- Search Form -->
+            <form class="d-flex ms-3" action="{% url 'connect:search' %}" method="get">
+                <input class="form-control me-2" type="search" name="q" 
+                       placeholder="Search..." aria-label="Search">
+                <button class="btn btn-outline-success" type="submit">Search</button>
+            </form>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,85 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">{{ page_title }}</h1>
+    
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <select class="form-select" id="categoryFilter">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="levelFilter">
+                <option value="">All Levels</option>
+                <option value="BEGINNER">Beginner</option>
+                <option value="INTERMEDIATE">Intermediate</option>
+                <option value="ADVANCED">Advanced</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for course in courses %}
+            <div class="col-md-4">
+                <div class="course-card card h-100 hover-shadow">
+                    {% if course.image %}
+                        <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                    {% else %}
+                        <img src="{% static 'images/default-course.jpg' %}" class="card-img-top" alt="Default Course Image">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="course-level badge bg-primary mb-2">{{ course.get_level_display }}</div>
+                        <h5 class="card-title">{{ course.title }}</h5>
+                        <p class="card-text">{{ course.description|truncatewords:20 }}</p>
+                        <div class="course-meta text-muted mb-3">
+                            <small><i class="bi bi-clock"></i> {{ course.duration }}</small>
+                            <small><i class="bi bi-person"></i> {{ course.instructor.get_full_name }}</small>
+                        </div>
+                        <a href="{% url 'connect:coursedetails' course.id %}" class="btn btn-primary">View Course</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No courses available yet.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add this to your CSS -->
+{% block extra_css %}
+<style>
+    .course-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .course-meta {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    .course-meta small {
+        margin-right: 1rem;
+    }
+    
+    .course-meta i {
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+{% endblock %} 

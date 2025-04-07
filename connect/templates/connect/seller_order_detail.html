@@ -1,0 +1,95 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">Order #{{ order.id }}</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Order Details -->
+                    <div class="mb-4">
+                        <h4>Order Information</h4>
+                        <p><strong>Order Date:</strong> {{ order.created_at|date:"F j, Y, g:i a" }}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="badge {% if order.status == 'delivered' %}bg-success{% elif order.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                {{ order.status|title }}
+                            </span>
+                        </p>
+                        <p><strong>Total Amount:</strong> KES {{ order.total_price }}</p>
+                    </div>
+
+                    <!-- Product Details -->
+                    <div class="mb-4">
+                        <h4>Product Information</h4>
+                        <div class="d-flex align-items-center mb-3">
+                            {% if order.product.image %}
+                            <img src="{{ order.product.image.url }}" alt="{{ order.product.name }}" 
+                                 class="img-thumbnail me-3" style="width: 100px;">
+                            {% endif %}
+                            <div>
+                                <h5 class="mb-1">{{ order.product.name }}</h5>
+                                <p class="mb-1">Quantity: {{ order.quantity }}</p>
+                                <p class="mb-0">Price per unit: KES {{ order.product.price }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Buyer Information -->
+                    <div class="mb-4">
+                        <h4>Buyer Information</h4>
+                        <p><strong>Name:</strong> {{ order.buyer.get_full_name|default:order.buyer.username }}</p>
+                        <p><strong>Email:</strong> {{ order.buyer.email }}</p>
+                        <p><strong>Phone:</strong> {{ order.buyer.phone_number }}</p>
+                    </div>
+
+                    <!-- Delivery Details -->
+                    <div class="mb-4">
+                        <h4>Delivery Information</h4>
+                        <p><strong>Address:</strong> {{ order.delivery_address }}</p>
+                        {% if order.delivery_instructions %}
+                        <p><strong>Special Instructions:</strong> {{ order.delivery_instructions }}</p>
+                        {% endif %}
+                        {% if order.assigned_rider %}
+                        <p>
+                            <strong>Assigned Rider:</strong> {{ order.assigned_rider.user.get_full_name }}
+                            <br>
+                            <strong>Rider Contact:</strong> {{ order.assigned_rider.phone_number }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="text-center">
+                        {% if order.status == 'pending' %}
+                            <form method="POST" action="{% url 'connect:update_order_status' order.id %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" name="status" value="accepted" class="btn btn-success">
+                                    Accept Order
+                                </button>
+                                <button type="submit" name="status" value="rejected" class="btn btn-danger">
+                                    Reject Order
+                                </button>
+                            </form>
+                        {% endif %}
+                        {% if order.status == 'accepted' and not order.assigned_rider %}
+                            <a href="{% url 'connect:assign_rider' order.id %}" class="btn btn-primary">
+                                Assign Rider
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'connect:chat_with_buyer' order.id %}" class="btn btn-info">
+                            Chat with Buyer
+                        </a>
+                        <a href="{% url 'connect:sellerorders' %}" class="btn btn-outline-secondary">
+                            Back to Orders
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

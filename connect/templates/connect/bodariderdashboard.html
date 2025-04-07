@@ -107,6 +107,29 @@
             </div>
         </div>
     </div>
+
+    <!-- Rider Profile -->
+    <div class="col-md-4">
+        <div class="dashboard-profile">
+            <div class="profile-header">
+                <h4>Rider Profile</h4>
+                <div class="availability-toggle">
+                    <label class="form-check form-switch">
+                        <input type="checkbox" class="form-check-input" id="availabilityToggle"
+                               {% if bodarider.status == 'Available' %}checked{% endif %}
+                               onchange="toggleAvailability(this)">
+                        <span class="form-check-label">Available for Deliveries</span>
+                    </label>
+                    <p class="status-text mt-2">
+                        Current Status: <span class="badge {% if bodarider.status == 'Available' %}bg-success{% else %}bg-secondary{% endif %}" id="statusBadge">
+                            {{ bodarider.status }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <!-- ... rest of the profile section ... -->
+        </div>
+    </div>
 </div>
 
 <!-- Withdraw Modal -->
@@ -166,5 +189,51 @@ document.getElementById('withdrawForm').addEventListener('submit', function(e) {
         console.error('Error:', error);
     });
 });
+
+function toggleAvailability(checkbox) {
+    const status = checkbox.checked ? 'Available' : 'Offline';
+    fetch('/community/rider/toggle-availability/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `status=${status}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const badge = document.getElementById('statusBadge');
+            badge.textContent = data.new_status;
+            badge.className = `badge ${data.new_status === 'Available' ? 'bg-success' : 'bg-secondary'}`;
+            
+            // Show toast notification
+            const toast = new bootstrap.Toast(document.createElement('div'));
+            toast.innerHTML = `
+                <div class="toast-body">
+                    ${data.message}
+                </div>
+            `;
+            document.body.appendChild(toast._element);
+            toast.show();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
 </script>
 {% endblock %} 

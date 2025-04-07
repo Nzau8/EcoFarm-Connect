@@ -10,21 +10,23 @@ from django.conf import settings
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.core.paginator import Paginator
-from django.db.models import Q
-from django.db import models
+from django.db.models import Q, Prefetch, Count
+from django.db import models, connection
+from .forms import ProductForm
 from .models import (
     Product, Order, Seller, BodaRider, Buyer,
     DeliveryEarning, OrderItem, Cart, Testimonial,
     Discussion, Post, Tag, Category, Course, Comment,
     User, CourseEnrollment, Article, Wishlist, Withdrawal,
-    DeliveryAddress, Notification, Negotiation, Chat, Message
+    DeliveryAddress, Notification, Negotiation, Chat, Message,
+    ContactMessage, GroupJoinRequest, Group, Resource, UserProgress
 )
 from .forms import (
     CustomUserCreationForm, DiscussionForm, PostForm,
     SellerProfileForm, BuyerProfileForm, BodaRiderProfileForm,ContactForm
 )
 from .mpesa import initiate_stk_push as process_mpesa_payment
-from .services import DeliveryAllocationService
+from .services import DeliveryAllocationService, ReviewService
 import json
 from django.contrib.admin.views.decorators import staff_member_required
 import logging
@@ -32,6 +34,11 @@ from django.core.mail import send_mail
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.urls import reverse
+from django.contrib.humanize.templatetags.humanize import naturaltime
+from .signals import user_joined_group, user_left_group
+from django.core.cache import cache
+from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.cache import cache_page
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -55,40 +62,57 @@ def about(request):
     }
     return render(request, 'connect/about.html', context)
 
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.contrib import messages
+from django.conf import settings
+import logging
+from .forms import ContactForm
+from .models import ContactMessage  # Adjust the import based on your models location
+
+logger = logging.getLogger(__name__)
+
 def contact_view(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
         if form.is_valid():
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
-            subject = form.cleaned_data['subject']
-            message = form.cleaned_data['message']
-            
-            email_subject = f'New Contact Form Submission: {subject}'
-            email_message = f"""
-            You have received a new message from the contact form:
-            
-            Name: {name}
-            Email: {email}
-            Subject: {subject}
-            Message:
-            {message}
-            """
-            
             try:
+                # Save to database
+                ContactMessage.objects.create(
+                    name=form.cleaned_data['name'],
+                    email=form.cleaned_data['email'],
+                    subject=form.cleaned_data['subject'],
+                    message=form.cleaned_data['message']
+                )
+
+                # Send email notification directly to you
+                email_subject = f'New Contact Form Submission: {form.cleaned_data["subject"]}'
+                email_message = f"""
+                You have received a new message from the contact form:
+                
+                Name: {form.cleaned_data['name']}
+                Email: {form.cleaned_data['email']}
+                Subject: {form.cleaned_data['subject']}
+                Message:
+                {form.cleaned_data['message']}
+                """
+
                 send_mail(
                     email_subject,
                     email_message,
-                    settings.EMAIL_HOST_USER,
-                    ['nzau878@gmail.com'],  
+                    settings.EMAIL_HOST_USER,  # The email sender
+                    ['nzau878@gmail.com'],  # email to receive the message directly
                     fail_silently=False,
                 )
+
                 messages.success(request, 'Thank you for your message! We will get back to you soon.')
+                return redirect('connect:contact')
+
             except Exception as e:
-                messages.error(request, 'Sorry, there was an error sending your message. Please try again later.')
-
-            return redirect(reverse('connect:contact'))
-
+                logger.error(f"Contact form error: {str(e)}")
+                messages.error(request, 'Sorry, there was an error processing your message. Please try again later.')
+        else:
+            messages.error(request, 'Please correct the errors in the form.')
     else:
         form = ContactForm()
 
@@ -248,7 +272,7 @@ def coursedetails(request, course_id):
 
 
 # View for the community home page
-def communityhome(request):
+def community_home(request):
     tag_filter = request.GET.get('tag')
     search_query = request.GET.get('query')
 
@@ -271,7 +295,7 @@ def communityhome(request):
     if tag_filter:
         discussions = discussions.filter(tags__name=tag_filter)
     
-    return render(request, 'connect/communityhome.html', {
+    return render(request, 'connect/community/home.html', {
         'discussions': discussions,
         'tags': tags,
         'tag_filter': tag_filter,
@@ -320,7 +344,7 @@ def creatediscussion(request):
                         discussion.tags.add(tag)
 
             messages.success(request, "Discussion created successfully!")
-            return redirect('connect:communityhome')
+            return redirect('connect:community_home')
         else:
             print("Form errors:", form.errors)
             for field, errors in form.errors.items():
@@ -342,87 +366,239 @@ def searchresults(request):
     })
 
 # 1. Marketplace Home
+@cache_page(60 * 5)
 def marketplacehome(request):
-    # Get all products
-    products = Product.objects.all().order_by('-created_at')
+    # Get filter parameters
+    filters = {
+        'category': request.GET.get('category'),
+        'min_price': request.GET.get('min_price'),
+        'max_price': request.GET.get('max_price'),
+        'location': request.GET.get('location'),
+        'availability': request.GET.get('availability'),
+        'search': request.GET.get('search', ''),
+    }
     
-    # Search functionality
-    search_query = request.GET.get('search', '')
-    if search_query:
+    # Build query
+    products = Product.objects.select_related(
+        'seller', 'category'
+    ).prefetch_related(
+        'orderitem_set'
+    ).order_by('-created_at')
+    
+    # Apply filters
+    if filters['search']:
         products = products.filter(
-            Q(name__icontains=search_query) |
-            Q(description__icontains=search_query)
+            Q(name__icontains=filters['search']) |
+            Q(description__icontains=filters['search'])
         )
     
-    # Category filter
-    category_id = request.GET.get('category')
-    if category_id:
-        products = products.filter(category_id=category_id)
+    if filters['category']:
+        products = products.filter(category_id=filters['category'])
+    
+    if filters['min_price']:
+        products = products.filter(price__gte=filters['min_price'])
+    
+    if filters['max_price']:
+        products = products.filter(price__lte=filters['max_price'])
+    
+    if filters['location']:
+        products = products.filter(location__icontains=filters['location'])
+    
+    if filters['availability'] == 'in_stock':
+        products = products.filter(stock__gt=0)
+    elif filters['availability'] == 'out_of_stock':
+        products = products.filter(stock=0)
+    
+    # Cache categories and locations
+    categories = cache.get('product_categories')
+    if not categories:
+        categories = Category.objects.annotate(
+            product_count=Count('products')
+        ).filter(product_count__gt=0)
+        cache.set('product_categories', categories, 60 * 60)  # Cache for 1 hour
+    
+    locations = cache.get('product_locations')
+    if not locations:
+        locations = Product.objects.values_list(
+            'location', flat=True
+        ).distinct()
+        cache.set('product_locations', locations, 60 * 60)
     
     # Pagination
-    paginator = Paginator(products, 9)  # Show 9 products per page
-    page = request.GET.get('page')
-    products = paginator.get_page(page)
+    paginator = Paginator(products, 12)
+    page = request.GET.get('page', 1)
+    
+    try:
+        products = paginator.page(page)
+    except (PageNotAnInteger, EmptyPage):
+        products = paginator.page(1)
     
     context = {
         'products': products,
-        'search_query': search_query,
-        'selected_category': category_id,
+        'categories': categories,
+        'locations': locations,
+        'filters': filters,
     }
     
     return render(request, 'connect/marketplacehome.html', context)
 
 # 2. Product Details
+@require_http_methods(["GET"])
 def productdetails(request, id):
-    product = get_object_or_404(Product, id=id)
-    return render(request, 'connect/productdetails.html', {'product': product})
+    # Get product with related data
+    product = get_object_or_404(
+        Product.objects.select_related(
+            'seller', 'category'
+        ).prefetch_related(
+            'orderitem_set'
+        ),
+        id=id
+    )
+    
+    # Get related products
+    related_products = Product.objects.filter(
+        category=product.category
+    ).exclude(
+        id=product.id
+    ).select_related(
+        'seller'
+    )[:4]
+    
+    context = {
+        'product': product,
+        'related_products': related_products,
+        'delivery_options': product.get_delivery_options(),
+    }
+    
+    return render(request, 'connect/productdetails.html', context)
 
-# 3. Cart
 def cart(request):
     user = request.user
-    cart_items = Cart.objects.filter(user=user)
-    
-    # Calculate subtotal for each item
-    for item in cart_items:
-        item.subtotal = item.product.price * item.quantity
-    
-    total_price = sum(item.subtotal for item in cart_items)
-    return render(request, 'connect/cart.html', {'cart_items': cart_items, 'total_price': total_price})
 
+    if user.is_authenticated:
+        # Logged-in users: Fetch cart from the database
+        cart_items = Cart.objects.filter(user=user)
+    else:
+        # Guest users: Fetch cart from session
+        cart_items = []
+        session_cart = request.session.get('cart', {})
+
+        for product_id, item in session_cart.items():
+            product = Product.objects.get(id=int(product_id))
+            cart_items.append({
+                'product': product,
+                'quantity': item['quantity'],
+                'subtotal': product.price * item['quantity']
+            })
+
+    # Calculate total price
+    total_price = sum(item['subtotal'] for item in cart_items) if not user.is_authenticated else sum(item.product.price * item.quantity for item in cart_items)
+
+    return render(request, 'connect/cart.html', {'cart_items': cart_items, 'total_price': total_price})
 # 4. Checkout
 @login_required
 def checkout(request):
-    cart_items = Cart.objects.filter(user=request.user)  # Get cart items for the user
-    total_cost = sum(item.product.price * item.quantity for item in cart_items)
+    cart_items = Cart.objects.filter(user=request.user)
+    if not cart_items.exists():
+        messages.warning(request, 'Your cart is empty.')
+        return redirect('connect:cart')
+
+    # Group cart items by seller
+    sellers_items = {}
+    for item in cart_items:
+        if item.product.seller not in sellers_items:
+            sellers_items[item.product.seller] = []
+        sellers_items[item.product.seller].append(item)
 
     if request.method == 'POST':
-        delivery_method = request.POST.get('delivery_method')
-        delivery_fee = 0
+        delivery_addresses = DeliveryAddress.objects.filter(user=request.user)
+        selected_address = request.POST.get('delivery_address')
+        delivery_instructions = request.POST.get('delivery_instructions', '')
+        contact_number = request.POST.get('contact_number', '')
 
-        if delivery_method == 'Boda Rider':
-            delivery_fee = 50  # Base fee for boda rider
+        # Process each seller's items as a separate order
+        for seller, items in sellers_items.items():
+            subtotal = sum(item.product.price * item.quantity for item in items)
+            delivery_method = request.POST.get(f'delivery_method_{seller.id}')
+            delivery_fee = 0
 
-        # Create the order
-        order = Order.objects.create(
-            buyer=request.user,
-            delivery_method=delivery_method,
-            delivery_fee=delivery_fee,
-            total_price=total_cost + delivery_fee  # Total cost including delivery fee
-        )
+            # Calculate delivery fee based on method
+            if delivery_method == 'BODA':
+                delivery_fee = 200  # Base fee for boda delivery
+            elif delivery_method == 'SELLER':
+                delivery_fee = seller.delivery_fee if hasattr(seller, 'delivery_fee') else 150
 
-        # Set the seller based on the products in the cart
-        sellers = set(item.product.seller for item in cart_items)  # Assuming Product has a seller field
-        if sellers:
-            order.seller = sellers.pop()  # Assign the first seller found
-            order.save()
+            total_price = subtotal + delivery_fee
 
-        # Redirect to payment processing (M-Pesa STK Push)
-        return redirect('connect:payment', order_id=order.id)
+            # Create the order
+            order = Order.objects.create(
+                buyer=request.user,
+                seller=seller,
+                total_price=total_price,
+                delivery_method=delivery_method,
+                delivery_fee=delivery_fee,
+                delivery_address=selected_address,
+                delivery_instructions=delivery_instructions,
+                contact_number=contact_number
+            )
 
-    return render(request, 'connect/checkout.html', {
+            # Create order items
+            for item in items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item.product,
+                    quantity=item.quantity
+                )
+
+            # If boda delivery is selected, assign the chosen rider
+            if delivery_method == 'BODA':
+                rider_id = request.POST.get(f'rider_{seller.id}')
+                if rider_id:
+                    rider = BodaRider.objects.get(id=rider_id)
+                    order.assigned_rider = rider
+                    order.delivery_status = 'ASSIGNED'
+                    order.save()
+                    
+                    # Update rider status
+                    rider.status = 'On Delivery'
+                    rider.save()
+                    
+                    # Create notification for the rider
+                    Notification.objects.create(
+                        user=rider.user,
+                        message=f'New delivery assignment for Order #{order.id}'
+                    )
+
+            # Create notifications
+            Notification.objects.create(
+                user=seller.user,
+                message=f'New order received! Order #{order.id}'
+            )
+            
+            Notification.objects.create(
+                user=request.user,
+                message=f'Order #{order.id} has been placed successfully'
+            )
+
+            # Clear cart items for this seller
+            Cart.objects.filter(user=request.user, product__seller=seller).delete()
+
+        return redirect('connect:order_confirmation', order_id=order.id)
+
+    # Get all delivery addresses for the user
+    delivery_addresses = DeliveryAddress.objects.filter(user=request.user)
+    
+    # Get available riders
+    available_riders = BodaRider.objects.filter(status='Available')
+    
+    context = {
         'cart_items': cart_items,
-        'total_cost': total_cost,
-    })
+        'sellers_items': sellers_items,
+        'delivery_addresses': delivery_addresses,
+        'available_riders': available_riders,
+        'total': sum(item.product.price * item.quantity for item in cart_items),
+    }
+    return render(request, 'connect/checkout.html', context)
 
 # 5. Order Confirmation
 @login_required
@@ -433,9 +609,10 @@ def order_confirmation(request, order_id):
     })
 
 # 6. Buyer Orders
+@login_required
 def buyerorders(request):
-    orders = Order.objects.filter(user=request.user)
-    return render(request, 'buyerorders.html', {'orders': orders})
+    orders = Order.objects.filter(buyer=request.user)
+    return render(request, 'connect/buyerorders.html', {'orders': orders})
 
 # 7. Order History
 def orderhistory(request):
@@ -468,49 +645,20 @@ def sellerdashboard(request):
         messages.error(request, "Seller profile not found. Please contact support.")
         return redirect('connect:home')
 
-# 9. Add Product (Seller)
-def addproduct(request):
+@login_required
+def add_product(request):
     if request.method == 'POST':
-        seller = request.user.seller
-        if not seller.location:
-            messages.error(request, "Seller location is required.")
-            return redirect('connect:addproduct')
-
-        try:
-            # Validate image
-            image = request.FILES.get('image')
-            if image:
-                # Check file size (5MB limit)
-                if image.size > 5 * 1024 * 1024:
-                    messages.error(request, "Image file is too large ( > 5MB )")
-                    return redirect('connect:addproduct')
-                
-                # Check file type
-                allowed_types = ['image/jpeg', 'image/png', 'image/jpg']
-                if image.content_type not in allowed_types:
-                    messages.error(request, "Only JPEG and PNG images are allowed")
-                    return redirect('connect:addproduct')
-
-            product = Product.objects.create(
-                seller=seller,
-                name=request.POST['name'],
-                description=request.POST['description'],
-                price=request.POST['price'],
-                stock=request.POST['stock'],
-                unit=request.POST.get('unit', 'kg'),
-                location=request.POST.get('location', seller.location),
-                delivery_available='delivery_available' in request.POST,
-                pickup_available='pickup_available' in request.POST,
-                image=image if image else None
-            )
-
-            messages.success(request, "Product added successfully!")
-            return redirect('connect:productdetails', id=product.id)
-        except Exception as e:
-            messages.error(request, f"Error adding product: {str(e)}")
-            return redirect('connect:addproduct')
-
-    return render(request, 'connect/addproduct.html')
+        form = ProductForm(request.POST, request.FILES)
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.seller = request.user.seller
+            product.save()
+            messages.success(request, 'Product added successfully!')
+            return redirect('connect:sellerdashboard')  # Redirect to seller dashboard
+    else:
+        form = ProductForm()
+    
+    return render(request, 'connect/addproduct.html', {'form': form})
 
 # 10. Edit Product (Seller)
 def editproduct(request, id):
@@ -630,11 +778,19 @@ from django.shortcuts import redirect
 from django.contrib.auth import login
 
 def custom_login(request):
+    next_url = request.GET.get('next', '')
+    
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
+            messages.success(request, f'Welcome back, {user.username}!')
+            
+            # Check if there's a next URL parameter
+            if next_url:
+                return redirect(next_url)
+            
             # Redirect based on user type
             if hasattr(user, 'seller'):
                 return redirect('connect:sellerdashboard')
@@ -643,10 +799,15 @@ def custom_login(request):
             elif hasattr(user, 'bodarider'):
                 return redirect('connect:bodariderdashboard')
             return redirect('connect:home')
+        else:
+            messages.error(request, 'Invalid username or password.')
     else:
         form = AuthenticationForm()
 
-    return render(request, 'connect/login.html', {'form': form})
+    return render(request, 'connect/login.html', {
+        'form': form,
+        'next': next_url
+    })
 
 
 # Unified Profile View
@@ -911,7 +1072,7 @@ def withdraw_earnings(request):
                 rider=rider, 
                 paid=False
             ).aggregate(total=models.Sum('amount'))['total'] or 0
-            
+
             if amount > pending_earnings:
                 return JsonResponse({
                     'status': 'error',
@@ -974,27 +1135,40 @@ def update_delivery_status(request, order_id):
     return JsonResponse({'status': 'success'})
 
 @login_required
+@require_http_methods(["POST"])
 def add_to_cart(request, product_id):
-    if request.method == 'POST':
-        product = get_object_or_404(Product, id=product_id)
+    try:
+        product = Product.objects.get(id=product_id)
         quantity = int(request.POST.get('quantity', 1))
         
-        # Check if product is already in cart
+        if not product.has_sufficient_stock(quantity):
+            messages.error(request, 'Not enough stock available.')
+            return redirect('connect:productdetails', id=product_id)
+        
         cart_item, created = Cart.objects.get_or_create(
             user=request.user,
             product=product,
             defaults={'quantity': quantity}
         )
         
-        # If product was already in cart, update quantity
         if not created:
-            cart_item.quantity += quantity
+            new_quantity = cart_item.quantity + quantity
+            if not product.has_sufficient_stock(new_quantity):
+                messages.error(request, 'Not enough stock available.')
+                return redirect('connect:productdetails', id=product_id)
+            
+            cart_item.quantity = new_quantity
             cart_item.save()
         
         messages.success(request, f"{product.name} added to cart successfully!")
         return redirect('connect:cart')
-    
-    return redirect('connect:productdetails', id=product_id)
+        
+    except Product.DoesNotExist:
+        messages.error(request, 'Product not found.')
+        return redirect('connect:marketplacehome')
+    except ValueError:
+        messages.error(request, 'Invalid quantity specified.')
+        return redirect('connect:productdetails', id=product_id)
 
 @login_required
 def update_cart(request, item_id):
@@ -1159,7 +1333,7 @@ def edit_discussion(request, discussion_id):
     # Check if user is author or admin
     if not (request.user == discussion.user or request.user.is_staff):
         messages.error(request, "You don't have permission to edit this discussion.")
-        return redirect('connect:communityhome')
+        return redirect('connect:community_home')
     
     if request.method == 'POST':
         form = DiscussionForm(request.POST, instance=discussion)
@@ -1177,7 +1351,7 @@ def edit_discussion(request, discussion_id):
                         discussion.tags.add(tag)
             
             messages.success(request, "Discussion updated successfully!")
-            return redirect('connect:communityhome')
+            return redirect('connect:community_home')
     else:
         form = DiscussionForm(instance=discussion)
     
@@ -1193,12 +1367,12 @@ def delete_discussion(request, discussion_id):
     # Check if user is author or admin
     if not (request.user == discussion.user or request.user.is_staff):
         messages.error(request, "You don't have permission to delete this discussion.")
-        return redirect('connect:communityhome')
+        return redirect('connect:community_home')
     
     if request.method == 'POST':
         discussion.delete()
         messages.success(request, "Discussion deleted successfully!")
-        return redirect('connect:communityhome')
+        return redirect('connect:community_home')
     
     return render(request, 'connect/delete_discussion.html', {
         'discussion': discussion
@@ -1319,5 +1493,456 @@ def admin_order_list(request):
     orders = Order.objects.all()
     return render(request, 'admin_order_list.html', {'orders': orders})
 def admin_earnings(request):
-    earnings = Earnings.objects.all()  # Customize the query as needed
+    earnings = DeliveryEarning.objects.all()  # Using the correct model name
     return render(request, 'admin_earnings.html', {'earnings': earnings})
+
+@login_required
+def toggle_rider_availability(request):
+    if not hasattr(request.user, 'bodarider'):
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'})
+    
+    rider = request.user.bodarider
+    new_status = request.POST.get('status')
+    
+    if new_status in ['Available', 'Offline']:
+        rider.status = new_status
+        rider.save()
+        return JsonResponse({
+            'status': 'success',
+            'new_status': rider.status,
+            'message': f'Status updated to {rider.status}'
+        })
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid status'})
+
+@login_required
+def add_comment(request, post_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            content = data.get('content')
+            parent_id = data.get('parent_id')
+            
+            post = get_object_or_404(Post, id=post_id)
+            
+            # Create the comment
+            comment = Comment.objects.create(
+                post=post,
+                author=request.user,
+                content=content,
+                parent_id=parent_id
+            )
+            
+            # Create notification for post author
+            if request.user != post.author:
+                Notification.objects.create(
+                    user=post.author,
+                    message=f"{request.user.get_full_name()} commented on your post"
+                )
+            
+            # If this is a reply, notify the parent comment author
+            if parent_id and comment.parent.author != request.user:
+                Notification.objects.create(
+                    user=comment.parent.author,
+                    message=f"{request.user.get_full_name()} replied to your comment"
+                )
+            
+            return JsonResponse({
+                'status': 'success',
+                'comment': {
+                    'id': comment.id,
+                    'content': comment.content,
+                    'created_at': naturaltime(comment.created_at),
+                    'author': {
+                        'username': comment.author.username,
+                        'full_name': comment.author.get_full_name(),
+                        'profile_picture': comment.author.profile.profile_picture.url if comment.author.profile.profile_picture else None
+                    },
+                    'likes_count': comment.likes.count(),
+                    'is_liked': comment.is_liked_by_user(request.user),
+                    'parent_id': comment.parent_id,
+                    'post_id': post.id
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@login_required
+def toggle_reaction(request, post_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            reaction_type = data.get('reaction_type')
+            
+            post = get_object_or_404(Post, id=post_id)
+            reaction, created = PostReaction.objects.get_or_create(
+                user=request.user,
+                post=post,
+                defaults={'reaction_type': reaction_type}
+            )
+            
+            if not created:
+                if reaction.reaction_type == reaction_type:
+                    reaction.delete()
+                    action = 'removed'
+                else:
+                    reaction.reaction_type = reaction_type
+                    reaction.save()
+                    action = 'changed'
+            else:
+                action = 'added'
+                # Create notification for post author
+                if request.user != post.author:
+                    Notification.objects.create(
+                        user=post.author,
+                        message=f"{request.user.get_full_name()} reacted to your post"
+                    )
+            
+            return JsonResponse({
+                'status': 'success',
+                'action': action,
+                'reactions': post.get_reaction_counts()
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@login_required
+def toggle_follow(request, user_id):
+    if request.method == 'POST':
+        try:
+            user_to_follow = get_object_or_404(User, id=user_id)
+            
+            if user_to_follow == request.user:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'You cannot follow yourself'
+                })
+            
+            if request.user in user_to_follow.profile.followers.all():
+                user_to_follow.profile.followers.remove(request.user)
+                is_following = False
+                # Remove notification
+                Notification.objects.filter(
+                    user=user_to_follow,
+                    message__contains=f"{request.user.get_full_name()} started following you"
+                ).delete()
+            else:
+                user_to_follow.profile.followers.add(request.user)
+                is_following = True
+                # Create notification
+                Notification.objects.create(
+                    user=user_to_follow,
+                    message=f"{request.user.get_full_name()} started following you"
+                )
+            
+            return JsonResponse({
+                'status': 'success',
+                'is_following': is_following,
+                'followers_count': user_to_follow.profile.get_followers_count()
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@login_required
+def like_comment(request, comment_id):
+    if request.method == 'POST':
+        try:
+            comment = get_object_or_404(Comment, id=comment_id)
+            
+            if request.user in comment.likes.all():
+                comment.likes.remove(request.user)
+                action = 'removed'
+            else:
+                comment.likes.add(request.user)
+                action = 'added'
+                # Create notification
+                if request.user != comment.author:
+                    Notification.objects.create(
+                        user=comment.author,
+                        message=f"{request.user.get_full_name()} liked your comment"
+                    )
+            
+            return JsonResponse({
+                'status': 'success',
+                'action': action,
+                'likes_count': comment.get_likes_count()
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@login_required
+def post_detail(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    comments = Comment.objects.filter(post=post, parent__isnull=True).prefetch_related('replies', 'author__profile')
+    
+    # Get similar posts based on hashtags
+    similar_posts = Post.objects.filter(
+        hashtags__in=post.hashtags.all()
+    ).exclude(id=post.id).distinct()[:3]
+    
+    context = {
+        'post': post,
+        'comments': comments,
+        'similar_posts': similar_posts,
+        'user_reaction': post.get_user_reaction(request.user),
+        'reaction_counts': post.get_reaction_counts()
+    }
+    return render(request, 'connect/community/post_detail.html', context)
+
+@login_required
+def group_join_request(request, group_id):
+    if request.method == 'POST':
+        try:
+            group = get_object_or_404(Group, id=group_id)
+            
+            # Check if user is already a member
+            if group.is_member(request.user):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'You are already a member of this group'
+                })
+            
+            # Check if request already exists
+            existing_request = GroupJoinRequest.objects.filter(
+                user=request.user,
+                group=group,
+                status='PENDING'
+            ).exists()
+            
+            if existing_request:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Join request already pending'
+                })
+            
+            # Create new join request
+            GroupJoinRequest.objects.create(
+                user=request.user,
+                group=group
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Join request sent successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            })
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    })
+
+@login_required
+def handle_join_request(request, request_id):
+    if request.method == 'POST':
+        try:
+            join_request = get_object_or_404(
+                GroupJoinRequest,
+                id=request_id,
+                group__admin=request.user  # Ensure user is group admin
+            )
+            
+            action = request.POST.get('action')
+            if action not in ['accept', 'reject']:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid action'
+                })
+            
+            join_request.status = 'ACCEPTED' if action == 'accept' else 'REJECTED'
+            join_request.save()  # This will trigger the signal handler
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': f'Request {action}ed successfully'
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            })
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    })
+
+@login_required
+@require_POST
+def create_product_review(request, product_id):
+    try:
+        order_id = request.POST.get('order_id')
+        rating = int(request.POST.get('rating'))
+        comment = request.POST.get('comment')
+        
+        if not (1 <= rating <= 5):
+            raise ValueError("Rating must be between 1 and 5")
+        
+        ReviewService.create_product_review(
+            product_id=product_id,
+            buyer_id=request.user.id,
+            order_id=order_id,
+            rating=rating,
+            comment=comment
+        )
+        
+        messages.success(request, "Review added successfully!")
+        return JsonResponse({'status': 'success'})
+        
+    except ValueError as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'An error occurred'})
+
+@login_required
+@require_POST
+def create_seller_review(request, seller_id):
+    try:
+        order_id = request.POST.get('order_id')
+        rating = int(request.POST.get('rating'))
+        comment = request.POST.get('comment')
+        
+        if not (1 <= rating <= 5):
+            raise ValueError("Rating must be between 1 and 5")
+        
+        ReviewService.create_seller_review(
+            seller_id=seller_id,
+            buyer_id=request.user.id,
+            order_id=order_id,
+            rating=rating,
+            comment=comment
+        )
+        
+        messages.success(request, "Review added successfully!")
+        return JsonResponse({'status': 'success'})
+        
+    except ValueError as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'An error occurred'})
+
+def get_product_reviews(request, product_id):
+    cursor_id = request.GET.get('cursor')
+    reviews = ReviewService.get_product_reviews(
+        product_id=product_id,
+        cursor_id=cursor_id,
+        limit=10
+    )
+    return JsonResponse({'reviews': reviews})
+
+def get_seller_reviews(request, seller_id):
+    cursor_id = request.GET.get('cursor')
+    reviews = ReviewService.get_seller_reviews(
+        seller_id=seller_id,
+        cursor_id=cursor_id,
+        limit=10
+    )
+    return JsonResponse({'reviews': reviews})
+
+def courses_list(request):
+    courses = Course.objects.all().order_by('-created_at')
+    context = {
+        'courses': courses,
+        'page_title': 'Available Courses'
+    }
+    return render(request, 'connect/courses_list.html', context)
+
+def resources_list(request):
+    resources = Resource.objects.all().order_by('-created_at')
+    context = {
+        'resources': resources,
+        'page_title': 'Learning Resources'
+    }
+    return render(request, 'connect/resources_list.html', context)
+
+@login_required
+def learning_progress(request):
+    user_progress = UserProgress.objects.filter(user=request.user)
+    context = {
+        'progress': user_progress,
+        'page_title': 'My Learning Progress'
+    }
+    return render(request, 'connect/learning_progress.html', context)
+
+def community_home(request):
+    context = {
+        'page_title': 'Learning Community'
+    }
+    return render(request, 'connect/community_home.html', context)
+
+def marketplace_home(request):
+    # Debug query execution
+    products = Product.objects.all()
+    logger.debug(f"Total products found: {products.count()}")
+    
+    # Debug individual products
+    for product in products:
+        logger.debug(f"Product ID: {product.id}, Name: {product.name}, Seller: {product.seller.company_name}")
+    
+    context = {
+        'products': products,
+        'categories': Category.objects.all(),
+    }
+    return render(request, 'connect/marketplace.html', context)
+def product_list(request):
+    products = Product.objects.all()
+    return render(request, 'productlist.html', {'products': products})
+
+
+def debug_database(request):
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    try:
+        # Test database connection
+        with connection.cursor() as cursor:
+            # Check products table
+            cursor.execute("""
+                SELECT COUNT(*) FROM connect_product;
+            """)
+            product_count = cursor.fetchone()[0]
+            
+            # Get the last 5 products
+            cursor.execute("""
+                SELECT id, name, created_at 
+                FROM connect_product 
+                ORDER BY created_at DESC 
+                LIMIT 5;
+            """)
+            recent_products = cursor.fetchall()
+            
+            # Check seller relationships
+            cursor.execute("""
+                SELECT p.id, p.name, s.company_name 
+                FROM connect_product p
+                JOIN connect_seller s ON p.seller_id = s.id
+                LIMIT 5;
+            """)
+            seller_products = cursor.fetchall()
+            
+        return JsonResponse({
+            'status': 'success',
+            'product_count': product_count,
+            'recent_products': recent_products,
+            'seller_products': seller_products
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'error': str(e)
+        })

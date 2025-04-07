@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
 {% block content %}
 <div class="container mt-4">
   <h3>Order History</h3>
@@ -20,7 +20,7 @@
             <p><strong>Order Date:</strong> {{ order.created_at|date:"M d, Y h:i A" }}</p>
             <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
             <p><strong>Delivery Address:</strong> {{ order.delivery_address }}</p>
-            <a href="{% url 'order_details' order.id %}" class="btn btn-success btn-sm">View Details</a>
+            <a href="{% url 'connect:order_details' order.id %}" class="btn btn-success btn-sm">View Details</a>
           </div>
         </div>
       </div>
@@ -28,7 +28,7 @@
     {% else %}
     <div class="col-md-12 text-center">
       <p>You have no orders yet. Start shopping today!</p>
-      <a href="{% url 'marketplace_home' %}" class="btn btn-success">Go to Marketplace</a>
+      <a href="{% url 'connect:marketplacehome' %}" class="btn btn-success">Go to Marketplace</a>
     </div>
     {% endif %}
   </div>

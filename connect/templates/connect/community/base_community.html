@@ -1,0 +1,368 @@
+{% extends 'connect/layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="community-container">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-lg-3">
+            <div class="community-sidebar">
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Menu</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'community_home' %}active{% endif %}" 
+                                   href="{% url 'connect:community_home' %}">
+                                    <i class="bi bi-house-door"></i> Home
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}"
+                                   href="{% url 'connect:profile' username=request.user.username %}">
+                                    <i class="bi bi-person"></i> Profile
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                                    <i class="bi bi-plus-circle"></i> Create Post
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'groups' %}active{% endif %}"
+                                   href="{% url 'connect:groups' %}">
+                                    <i class="bi bi-people"></i> Groups
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'events' %}active{% endif %}"
+                                   href="{% url 'connect:events' %}">
+                                    <i class="bi bi-calendar-event"></i> Events
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.resolver_match.url_name == 'live_streams' %}active{% endif %}"
+                                   href="{% url 'connect:live_streams' %}">
+                                    <i class="bi bi-broadcast"></i> Live Streams
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                {% if trending_hashtags %}
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Trending Topics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="hashtags-container">
+                            {% for hashtag in trending_hashtags %}
+                            <a href="{% url 'connect:hashtag' name=hashtag.name %}" class="hashtag-link">
+                                #{{ hashtag.name }}
+                                <span class="badge bg-light text-dark">{{ hashtag.post_count }}</span>
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if suggested_groups %}
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Suggested Groups</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="suggested-groups">
+                            {% for group in suggested_groups %}
+                            <div class="group-card">
+                                {% if group.cover_image %}
+                                    <img src="{{ group.cover_image.url }}" 
+                                         alt="{{ group.name }}" 
+                                         class="group-image">
+                                {% else %}
+                                    <img src="{% static 'connect/images/default-group-cover.jpg' %}" 
+                                         alt="{{ group.name }}" 
+                                         class="group-image">
+                                {% endif %}
+                                <div class="group-info">
+                                    <h6>{{ group.name }}</h6>
+                                    <p class="text-muted mb-2">{{ group.member_count }} members</p>
+                                    <a href="{% url 'connect:group_detail' group_id=group.id %}" class="btn btn-sm btn-outline-success">View Group</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-6">
+            {% block community_content %}{% endblock %}
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="col-lg-3">
+            <div class="community-sidebar">
+                {% if upcoming_events %}
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Upcoming Events</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="upcoming-events">
+                            {% for event in upcoming_events %}
+                            <div class="event-card">
+                                <div class="event-date">
+                                    <span class="date">{{ event.start_time|date:"d" }}</span>
+                                    <span class="month">{{ event.start_time|date:"M" }}</span>
+                                </div>
+                                <div class="event-info">
+                                    <h6>{{ event.title }}</h6>
+                                    <p class="text-muted">
+                                        <i class="bi bi-geo-alt"></i>
+                                        {% if event.is_online %}Online{% else %}{{ event.location }}{% endif %}
+                                    </p>
+                                    <a href="{% url 'connect:event_detail' event_id=event.id %}" class="btn btn-sm btn-outline-success">View Event</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="card mb-3">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="quick-actions">
+                            <a href="{% url 'connect:create_event' %}" class="btn btn-outline-success mb-2 w-100">
+                                <i class="bi bi-calendar-plus"></i> Create Event
+                            </a>
+                            <a href="{% url 'connect:create_group' %}" class="btn btn-outline-success mb-2 w-100">
+                                <i class="bi bi-people-plus"></i> Create Group
+                            </a>
+                            <a href="{% url 'connect:create_stream' %}" class="btn btn-outline-success mb-2 w-100">
+                                <i class="bi bi-camera-video"></i> Start Live Stream
+                            </a>
+                            <a href="{% url 'connect:create_poll' %}" class="btn btn-outline-success w-100">
+                                <i class="bi bi-bar-chart"></i> Create Poll
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Post Modal -->
+<div class="modal fade" id="createPostModal" tabindex="-1" aria-labelledby="createPostModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createPostModalLabel">Create Post</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'connect:create_post' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <textarea class="form-control" name="content" rows="4" placeholder="Share your thoughts..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <input type="file" class="form-control" name="media">
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" class="form-control" name="hashtags_text" placeholder="Add hashtags (e.g., #farming #organic)">
+                    </div>
+                    <div class="mb-3">
+                        <select class="form-select" name="group">
+                            <option value="">Post to your profile</option>
+                            {% for group in user.joined_groups.all %}
+                            <option value="{{ group.id }}">{{ group.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .community-container {
+        padding: 2rem 0;
+        background-color: #f8f9fa;
+        min-height: calc(100vh - 60px);
+    }
+
+    .community-sidebar {
+        position: sticky;
+        top: 2rem;
+    }
+
+    .nav-link {
+        color: #495057;
+        padding: 0.8rem 1.2rem;
+        border-radius: 0;
+        transition: all 0.3s ease;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .nav-link:last-child {
+        border-bottom: none;
+    }
+
+    .nav-link:hover, .nav-link.active {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: var(--bs-success);
+    }
+
+    .nav-link i {
+        margin-right: 0.8rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .group-card {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid rgba(0,0,0,0.1);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+        transition: transform 0.2s ease;
+    }
+
+    .group-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .group-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+        margin-right: 1rem;
+    }
+
+    .group-info {
+        flex: 1;
+    }
+
+    .group-info h6 {
+        margin-bottom: 0.25rem;
+        color: #333;
+    }
+
+    .hashtags-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .hashtag-link {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background-color: rgba(40, 167, 69, 0.1);
+        color: var(--primary);
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .hashtag-link:hover {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    .event-card {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        background: white;
+    }
+
+    .event-date {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        color: white;
+        border-radius: 8px;
+        margin-right: 1rem;
+    }
+
+    .event-date .date {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .event-date .month {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+    }
+
+    .event-info {
+        flex: 1;
+    }
+
+    .event-info h6 {
+        margin-bottom: 0.25rem;
+    }
+
+    .quick-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-outline-success {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .btn-outline-success:hover {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    @media (max-width: 992px) {
+        .community-sidebar {
+            position: static;
+            margin-bottom: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'js/community.js' %}"></script>
+{% endblock %} 

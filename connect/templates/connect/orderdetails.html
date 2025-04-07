@@ -1,4 +1,5 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
+
 {% block content %}
 <div class="container mt-4">
   <h3>Order Details</h3>
@@ -14,7 +15,7 @@
           {{ order.status|title }}
         </span>
       </p>
-      <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+      <p><strong>Total Price:</strong> KES {{ order.total_price }}</p>
       <p><strong>Payment Method:</strong> {{ order.payment_method|title }}</p>
     </div>
   </div>
@@ -39,9 +40,10 @@
         <div class="alert alert-info">
             <h5>Delivery Confirmation Required</h5>
             <p>Your order has been marked as delivered. Please confirm if you have received it.</p>
-            <a href="{% url 'connect:confirm_delivery' order.id %}" class="btn btn-success">
-                Confirm Delivery
-            </a>
+            <form method="POST" action="{% url 'connect:confirm_delivery' order.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">Confirm Delivery</button>
+            </form>
         </div>
       {% endif %}
     </div>
@@ -64,7 +66,7 @@
           <tr>
             <td>{{ item.product.name }}</td>
             <td>{{ item.quantity }}</td>
-            <td>${{ item.product.price|multiply:item.quantity }}</td>
+            <td>KES {{ item.product.price|multiply:item.quantity }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -73,14 +75,14 @@
   </div>
 
   <!-- Actions -->
-  <div class="text-center mt-4">
+  <div class="mt-4 text-center">
     {% if order.status == 'pending' %}
-    <a href="{% url 'cancel_order' order.id %}" class="btn btn-danger">Cancel Order</a>
+    <a href="{% url 'connect:cancel_order' order.id %}" class="btn btn-danger">Cancel Order</a>
     {% endif %}
     {% if order.status == 'delivered' %}
-    <a href="{% url 'product_review' order.id %}" class="btn btn-success">Review Products</a>
+    <a href="{% url 'connect:product_review' order.id %}" class="btn btn-success">Review Products</a>
     {% endif %}
-    <a href="{% url 'order_history' %}" class="btn btn-outline-success">Back to Order History</a>
+    <a href="{% url 'connect:buyerorders' %}" class="btn btn-outline-success">Back to Orders</a>
   </div>
 </div>
 {% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">{{ page_title }}</h1>
+    <div class="row g-4">
+        {% for resource in resources %}
+            <div class="col-md-4">
+                <div class="resource-card">
+                    <!-- Resource display logic -->
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p>No resources available yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %} 

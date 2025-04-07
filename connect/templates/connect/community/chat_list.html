@@ -1,0 +1,97 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="chat-container">
+    <div class="chat-header mb-4">
+        <h2>Messages</h2>
+        <p class="text-muted mb-0">Stay connected with your community</p>
+    </div>
+
+    <div class="chat-list">
+        {% for chat in chats %}
+            {% with other_participant=chat.participants.exclude.id=request.user.id.first %}
+            <div class="chat-item card mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if other_participant.profile.profile_picture %}
+                            <img src="{{ other_participant.profile.profile_picture.url }}"
+                                 alt="{{ other_participant.username }}"
+                                 class="rounded-circle me-3"
+                                 style="width: 50px; height: 50px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'connect/images/default_profile.png' %}"
+                                 alt="{{ other_participant.username }}"
+                                 class="rounded-circle me-3"
+                                 style="width: 50px; height: 50px; object-fit: cover;">
+                        {% endif %}
+                        
+                        <div class="chat-info flex-grow-1">
+                            <h5 class="mb-1">
+                                {{ other_participant.get_full_name|default:other_participant.username }}
+                            </h5>
+                            {% with last_message=chat.messages.last %}
+                                {% if last_message %}
+                                    <p class="mb-0 text-muted">
+                                        {% if last_message.sender == request.user %}
+                                            You:
+                                        {% endif %}
+                                        {{ last_message.content|truncatechars:50 }}
+                                    </p>
+                                    <small class="text-muted">
+                                        {{ last_message.timestamp|timesince }} ago
+                                    </small>
+                                {% else %}
+                                    <p class="mb-0 text-muted">No messages yet</p>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+
+                        <a href="{% url 'connect:chat_detail' chat_id=chat.id %}" 
+                           class="btn btn-primary">
+                            Open Chat
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+        {% empty %}
+            <div class="text-center py-5">
+                <i class="bi bi-chat-dots display-1 text-muted"></i>
+                <h4 class="mt-3">No Messages Yet</h4>
+                <p class="text-muted">Start a conversation with someone from the community!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .chat-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+    }
+
+    .chat-item {
+        transition: transform 0.2s;
+    }
+
+    .chat-item:hover {
+        transform: translateX(5px);
+    }
+
+    .chat-info {
+        min-width: 0;
+    }
+
+    .chat-info p {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock %} 

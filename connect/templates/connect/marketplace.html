@@ -1,0 +1,38 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Add Product Button for Sellers -->
+    {% if request.user.is_authenticated and hasattr(request.user, 'seller') %}
+    <div class="mb-4">
+        <a href="{% url 'connect:add_product' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Add New Product
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Products Grid -->
+    <div class="row">
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ product.name }}</h5>
+                    <p class="card-text">{{ product.description|truncatechars:100 }}</p>
+                    <p class="card-text"><strong>KES {{ product.price }}</strong></p>
+                    <a href="{% url 'connect:productdetails' id=product.id %}" class="btn btn-primary">View Details</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <p>No products available.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

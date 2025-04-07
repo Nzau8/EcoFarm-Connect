@@ -1,0 +1,169 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Create Poll</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="pollForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.question.id_for_label }}" class="form-label">Question</label>
+                            {{ form.question }}
+                            {% if form.question.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.question.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Ask a clear and specific question</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="options" class="form-label">Options</label>
+                            <div id="optionsContainer">
+                                <div class="option-input mb-2">
+                                    <input type="text" class="form-control" placeholder="Enter an option">
+                                </div>
+                                <div class="option-input mb-2">
+                                    <input type="text" class="form-control" placeholder="Enter an option">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-success btn-sm mt-2" id="addOptionBtn">
+                                <i class="bi bi-plus-circle"></i> Add Option
+                            </button>
+                            {{ form.options }}
+                            {% if form.options.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.options.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.end_date.id_for_label }}" class="form-label">End Date</label>
+                            {{ form.end_date }}
+                            {% if form.end_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.end_date.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">When should the poll close?</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create Poll</button>
+                            <a href="{% url 'connect:polls' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const optionsContainer = document.getElementById('optionsContainer');
+    const addOptionBtn = document.getElementById('addOptionBtn');
+    const optionsHiddenInput = document.getElementById('{{ form.options.id_for_label }}');
+    const form = document.getElementById('pollForm');
+    
+    // Hide the original textarea
+    optionsHiddenInput.style.display = 'none';
+    
+    // Add new option input
+    addOptionBtn.addEventListener('click', function() {
+        const newOption = document.createElement('div');
+        newOption.className = 'option-input mb-2 d-flex';
+        newOption.innerHTML = `
+            <input type="text" class="form-control" placeholder="Enter an option">
+            <button type="button" class="btn btn-outline-danger ms-2 remove-option">
+                <i class="bi bi-trash"></i>
+            </button>
+        `;
+        optionsContainer.appendChild(newOption);
+        
+        // Add event listeners to the new input
+        const input = newOption.querySelector('input[type="text"]');
+        input.addEventListener('input', updateOptionsInput);
+        
+        // Add event listener to remove button
+        newOption.querySelector('.remove-option').addEventListener('click', function() {
+            newOption.remove();
+            updateOptionsInput();
+        });
+    });
+    
+    // Function to update hidden input with all options
+    function updateOptionsInput() {
+        const options = [];
+        optionsContainer.querySelectorAll('input[type="text"]').forEach(input => {
+            if (input.value.trim()) {
+                options.push(input.value.trim());
+            }
+        });
+        optionsHiddenInput.value = options.join('\n');
+    }
+    
+    // Add event listeners to existing option inputs
+    optionsContainer.querySelectorAll('input[type="text"]').forEach(input => {
+        input.addEventListener('input', updateOptionsInput);
+    });
+    
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Update options one last time before submitting
+        updateOptionsInput();
+        
+        // Validate that we have at least two options
+        const filledOptions = Array.from(optionsContainer.querySelectorAll('input[type="text"]'))
+            .filter(input => input.value.trim().length > 0);
+            
+        if (filledOptions.length < 2) {
+            alert('Please add at least two options for the poll');
+            return;
+        }
+        
+        // Submit the form if validation passes
+        this.submit();
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .option-input {
+        position: relative;
+    }
+    
+    .remove-option {
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+</style>
+{% endblock %} 

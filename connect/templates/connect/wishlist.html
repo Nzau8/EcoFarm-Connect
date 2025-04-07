@@ -1,4 +1,4 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
 {% block content %}
 <div class="container mt-4">
   <h3>Your Wishlist</h3>
@@ -13,9 +13,9 @@
           <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}">
           <div class="card-body">
             <h5 class="card-title">{{ item.product.name }}</h5>
-            <p class="card-text">${{ item.product.price }}</p>
-            <a href="{% url 'add_to_cart' item.product.id %}" class="btn btn-success">Add to Cart</a>
-            <a href="{% url 'remove_from_wishlist' item.id %}" class="btn btn-danger">Remove</a>
+            <p class="card-text">KES {{ item.product.price }}</p>
+            <a href="{% url 'connect:add_to_cart' item.product.id %}" class="btn btn-success">Add to Cart</a>
+            <a href="{% url 'connect:remove_from_wishlist' item.id %}" class="btn btn-danger">Remove</a>
           </div>
         </div>
       </div>
@@ -23,7 +23,7 @@
     {% else %}
     <div class="col-md-12 text-center">
       <p>Your wishlist is empty. Browse products to add to your wishlist!</p>
-      <a href="{% url 'marketplace_home' %}" class="btn btn-success">Go to Marketplace</a>
+      <a href="{% url 'connect:marketplacehome' %}" class="btn btn-success">Go to Marketplace</a>
     </div>
     {% endif %}
   </div>

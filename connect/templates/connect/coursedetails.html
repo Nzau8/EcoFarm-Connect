@@ -1,59 +1,107 @@
 {% extends 'connect/base.html' %}
 {% load static %}
 
-{% block title %}{{ course.title }} - Connect{% endblock %}
-
 {% block content %}
 <div class="container py-4">
     <div class="row">
-        <!-- Course Header -->
-        <div class="col-md-8">
-            <h1 class="mb-3">{{ course.title }}</h1>
-            <div class="course-meta mb-4">
-                <span class="badge bg-primary me-2">{{ course.level }}</span>
-                <span class="me-3"><i class="bi bi-clock"></i> {{ course.duration }}</span>
-                <span><i class="bi bi-person"></i> {{ course.instructor }}</span>
-            </div>
-            
-            {% if course.image %}
-                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="img-fluid rounded mb-4">
-            {% endif %}
-            
-            <!-- Course Description -->
+        <div class="col-lg-8">
             <div class="card mb-4">
+                {% if course.image %}
+                    <img src="{{ course.image.url }}" class="card-img-top" alt="{{ course.title }}">
+                {% endif %}
                 <div class="card-body">
-                    <h4>Course Description</h4>
-                    <p>{{ course.description }}</p>
-                </div>
-            </div>
-            
-            <!-- Lessons -->
-            <div class="card">
-                <div class="card-body">
-                    <h4>Course Content</h4>
-                    <div class="list-group">
-                        {% for lesson in lessons %}
-                        <div class="list-group-item">
-                            <h5 class="mb-1">{{ lesson.title }}</h5>
-                            <p class="mb-1">{{ lesson.content|truncatewords:30 }}</p>
+                    <h1 class="card-title">{{ course.title }}</h1>
+                    <div class="course-meta mb-4">
+                        <span class="badge bg-success">{{ course.category.name }}</span>
+                        <span class="badge bg-primary">{{ course.level }}</span>
+                        <span class="text-muted ms-2">
+                            <i class="bi bi-clock"></i> {{ course.duration }}
+                        </span>
+                    </div>
+                    
+                    <div class="course-description">
+                        {{ course.description|linebreaks }}
+                    </div>
+
+                    <!-- Course Content -->
+                    <div class="course-content mt-4">
+                        <h3>Course Content</h3>
+                        <div class="accordion" id="courseContent">
+                            {% for module in course.modules.all %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="module{{ module.id }}Header">
+                                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                            type="button" data-bs-toggle="collapse" 
+                                            data-bs-target="#module{{ module.id }}Content">
+                                        {{ module.title }}
+                                    </button>
+                                </h2>
+                                <div id="module{{ module.id }}Content" 
+                                     class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                                     data-bs-parent="#courseContent">
+                                    <div class="accordion-body">
+                                        {{ module.description|linebreaks }}
+                                        <div class="module-lessons">
+                                            {% for lesson in module.lessons.all %}
+                                            <div class="lesson-item">
+                                                <i class="bi bi-play-circle"></i>
+                                                {{ lesson.title }}
+                                                {% if is_enrolled %}
+                                                <a href="{% url 'connect:lesson_detail' course.id module.id lesson.id %}" 
+                                                   class="btn btn-sm btn-outline-success float-end">
+                                                    Start Lesson
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
                         </div>
-                        {% empty %}
-                        <p class="text-muted">No lessons available yet.</p>
-                        {% endfor %}
                     </div>
                 </div>
             </div>
+
+            <!-- Course Reviews -->
+            <div class="card">
+                <div class="card-body">
+                    <h3>Student Reviews</h3>
+                    {% if reviews %}
+                        {% for review in reviews %}
+                        <div class="review-item mb-3">
+                            <div class="d-flex align-items-center">
+                                {% if review.user.profile_picture %}
+                                    <img src="{{ review.user.profile_picture.url }}" 
+                                         alt="{{ review.user.username }}"
+                                         class="rounded-circle me-2"
+                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ review.user.get_full_name|default:review.user.username }}</h6>
+                                    <div class="rating text-warning">
+                                        {% for i in ""|ljust:review.rating %}★{% endfor %}
+                                        {% for i in ""|ljust:review.remaining_stars %}☆{% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="mt-2">{{ review.comment }}</p>
+                            <small class="text-muted">{{ review.created_at|timesince }} ago</small>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p>No reviews yet. Be the first to review this course!</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        
-        <!-- Sidebar -->
-        <div class="col-md-4">
+
+        <!-- Course Sidebar -->
+        <div class="col-lg-4">
             <div class="card mb-4">
                 <div class="card-body">
-                    <h4>Course Information</h4>
                     <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <i class="bi bi-mortarboard"></i> Level: {{ course.level }}
-                        </li>
                         <li class="mb-2">
                             <i class="bi bi-clock"></i> Duration: {{ course.duration }}
                         </li>
@@ -70,59 +118,53 @@
                             <div class="alert alert-success">
                                 <i class="bi bi-check-circle"></i> You are enrolled in this course
                             </div>
+                            <a href="{% url 'connect:start_course' course.id %}" class="btn btn-success w-100">
+                                Continue Learning
+                            </a>
                         {% else %}
-                            <form method="post">
+                            <form method="post" action="{% url 'connect:enroll_course' course.id %}">
                                 {% csrf_token %}
-                                <button type="submit" name="enroll" class="btn btn-success w-100">
+                                <button type="submit" class="btn btn-success w-100">
                                     Enroll Now
                                 </button>
                             </form>
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'connect:login' %}" class="btn btn-primary w-100">Login to Enroll</a>
+                        <a href="{% url 'connect:login' %}?next={{ request.path }}" class="btn btn-primary w-100">
+                            Login to Enroll
+                        </a>
                     {% endif %}
                 </div>
             </div>
-            
-            <!-- Comments Section -->
+
+            <!-- Related Courses -->
+            {% if related_courses %}
             <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Related Courses</h5>
+                </div>
                 <div class="card-body">
-                    <h4>Comments</h4>
-                    
-                    <!-- Comments List - Visible to All -->
-                    <div class="comments-list mb-4">
-                        {% for comment in comments %}
-                        <div class="comment mb-3">
-                            <div class="d-flex justify-content-between">
-                                <strong>{{ comment.user.username }}</strong>
-                                <small class="text-muted">{{ comment.created_at|date }}</small>
+                    {% for related_course in related_courses %}
+                    <div class="related-course mb-3">
+                        <a href="{% url 'connect:coursedetails' related_course.id %}" class="text-decoration-none">
+                            <div class="d-flex align-items-center">
+                                {% if related_course.image %}
+                                <img src="{{ related_course.image.url }}" 
+                                     alt="{{ related_course.title }}"
+                                     class="me-2"
+                                     style="width: 60px; height: 60px; object-fit: cover;">
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-1">{{ related_course.title }}</h6>
+                                    <small class="text-muted">{{ related_course.duration }}</small>
+                                </div>
                             </div>
-                            <p class="mb-0">{{ comment.text }}</p>
-                        </div>
-                        {% empty %}
-                        <p class="text-muted">No comments yet.</p>
-                        {% endfor %}
+                        </a>
                     </div>
-                    
-                    <!-- Comment Form - Only for Authenticated Users -->
-                    {% if user.is_authenticated %}
-                        <form method="post" class="mt-4">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <textarea class="form-control" name="comment" rows="3" 
-                                        placeholder="Add a comment..." required></textarea>
-                            </div>
-                            <button type="submit" name="comment" class="btn btn-primary">
-                                Post Comment
-                            </button>
-                        </form>
-                    {% else %}
-                        <div class="alert alert-info">
-                            <a href="{% url 'connect:login' %}">Login</a> to post comments
-                        </div>
-                    {% endif %}
+                    {% endfor %}
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -130,20 +172,21 @@
 
 {% block extra_css %}
 <style>
-.course-meta {
-    color: #6c757d;
+.lesson-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
 }
-
-.course-meta i {
-    margin-right: 0.5rem;
+.lesson-item:last-child {
+    border-bottom: none;
 }
-
-.comment {
-    padding: 1rem;
-    border-bottom: 1px solid #dee2e6;
+.rating {
+    font-size: 0.9rem;
 }
-
-.comment:last-child {
+.review-item {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 1rem;
+}
+.review-item:last-child {
     border-bottom: none;
 }
 </style>

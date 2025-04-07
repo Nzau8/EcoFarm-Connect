@@ -1,0 +1,289 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Search and Filters Section -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form class="d-flex" method="GET">
+                <div class="input-group">
+                    <input type="search" name="search" class="form-control" placeholder="Search discussions..." value="{{ search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-4 text-end">
+            {% if user.is_authenticated %}
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#newDiscussionModal">
+                <i class="bi bi-plus-circle"></i> Start New Discussion
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-outline-primary active category-filter" data-category="all">All</button>
+                {% for category in categories %}
+                <button class="btn btn-outline-primary category-filter" data-category="{{ category|slugify }}">
+                    {{ category }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Discussions Grid -->
+    <div class="row" id="discussions-container">
+        {% for post in posts %}
+        <div class="col-12 col-md-6 col-lg-4 mb-4 discussion-card" data-categories="{{ post.categories|join:' '|slugify }}">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <img src="{% if post.author.profile.profile_picture %}{{ post.author.profile.profile_picture.url }}{% else %}{% static 'connect/images/default-avatar.png' %}{% endif %}" 
+                             class="rounded-circle me-2" 
+                             width="40" 
+                             height="40" 
+                             alt="{{ post.author.username }}">
+                        <div>
+                            <h6 class="mb-0">{{ post.author.get_full_name|default:post.author.username }}</h6>
+                            <small class="text-muted">{{ post.created_at|timesince }} ago</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ post.title }}</h5>
+                    <p class="card-text text-truncate">{{ post.content }}</p>
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        {% for tag in post.tags.all %}
+                        <span class="badge bg-secondary">{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-link text-decoration-none" onclick="toggleContent(this)">View More</button>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="reactions">
+                            {% if user.is_authenticated %}
+                            <button class="btn btn-sm btn-reaction" onclick="react('{{ post.id }}', 'like')">
+                                <i class="bi bi-hand-thumbs-up{% if post.user_reaction == 'LIKE' %}-fill{% endif %}"></i>
+                                <span class="reaction-count">{{ post.get_reaction_count.LIKE }}</span>
+                            </button>
+                            <button class="btn btn-sm btn-reaction" onclick="react('{{ post.id }}', 'love')">
+                                <i class="bi bi-heart{% if post.user_reaction == 'LOVE' %}-fill{% endif %}"></i>
+                                <span class="reaction-count">{{ post.get_reaction_count.LOVE }}</span>
+                            </button>
+                            <button class="btn btn-sm btn-reaction" onclick="react('{{ post.id }}', 'insightful')">
+                                <i class="bi bi-lightbulb{% if post.user_reaction == 'INSIGHTFUL' %}-fill{% endif %}"></i>
+                                <span class="reaction-count">{{ post.get_reaction_count.INSIGHTFUL }}</span>
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="toggleComments('{{ post.id }}')">
+                                <i class="bi bi-chat"></i> {{ post.comments.count }}
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Collapsible Comments Section -->
+                    <div class="comments-section collapse mt-3" id="comments-{{ post.id }}">
+                        {% if user.is_authenticated %}
+                        <form class="mb-3 comment-form" onsubmit="submitComment(event, '{{ post.id }}')">
+                            <div class="input-group">
+                                <textarea class="form-control" rows="1" placeholder="Write a comment..."></textarea>
+                                <button type="submit" class="btn btn-primary">Post</button>
+                            </div>
+                        </form>
+                        {% endif %}
+                        <div class="comments-list" id="comments-list-{{ post.id }}">
+                            {% for comment in post.comments.all %}
+                            <div class="comment mb-2">
+                                <div class="d-flex">
+                                    <img src="{% if comment.author.profile.profile_picture %}{{ comment.author.profile.profile_picture.url }}{% else %}{% static 'connect/images/default-avatar.png' %}{% endif %}" 
+                                         class="rounded-circle me-2" 
+                                         width="32" 
+                                         height="32" 
+                                         alt="{{ comment.author.username }}">
+                                    <div>
+                                        <div class="comment-content">
+                                            <strong>{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                                            <small class="text-muted ms-2">{{ comment.created_at|timesince }} ago</small>
+                                            <p class="mb-0">{{ comment.content }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">No discussions found.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- New Discussion Modal -->
+<div class="modal fade" id="newDiscussionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Start New Discussion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="newDiscussionForm" method="POST" action="{% url 'connect:create_discussion' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-control" name="content" rows="5" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categories</label>
+                        <select class="form-select" name="categories" multiple required>
+                            {% for category in categories %}
+                            <option value="{{ category }}">{{ category }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tags</label>
+                        <input type="text" class="form-control" name="tags" placeholder="Separate tags with commas">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Discussion</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+const CATEGORIES = [
+    'Crop Farming', 'Livestock Farming', 'Organic Farming', 'Aquaculture',
+    'Agroforestry', 'Horticulture', 'Apiculture', 'Agribusiness',
+    'Agricultural Technology', 'Climate-Smart Agriculture', 'Permaculture',
+    'Soil & Water Management', 'Irrigation Systems', 'Agricultural Policy',
+    'Post-Harvest Management', 'Agroecology', 'Farm Machinery & Tools',
+    'Greenhouse Farming', 'Poultry Farming', 'Dairy Farming', 'Fisheries',
+    'Animal Health', 'Agrochemicals & Fertilizers'
+];
+
+// Initialize category filters
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCategoryFilters();
+    initializeReactions();
+    initializeComments();
+});
+
+function initializeCategoryFilters() {
+    const filters = document.querySelectorAll('.category-filter');
+    filters.forEach(filter => {
+        filter.addEventListener('click', function() {
+            filters.forEach(f => f.classList.remove('active'));
+            this.classList.add('active');
+            filterDiscussions(this.dataset.category);
+        });
+    });
+}
+
+function filterDiscussions(category) {
+    const cards = document.querySelectorAll('.discussion-card');
+    cards.forEach(card => {
+        if (category === 'all' || card.dataset.categories.includes(category)) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+function toggleContent(btn) {
+    const content = btn.previousElementSibling;
+    if (content.classList.contains('text-truncate')) {
+        content.classList.remove('text-truncate');
+        btn.textContent = 'Show Less';
+    } else {
+        content.classList.add('text-truncate');
+        btn.textContent = 'View More';
+    }
+}
+
+function react(postId, reactionType) {
+    if (!document.querySelector('body').classList.contains('user-authenticated')) {
+        window.location.href = "{% url 'login' %}";
+        return;
+    }
+    
+    fetch(`/api/posts/${postId}/react/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ reaction_type: reactionType })
+    })
+    .then(response => response.json())
+    .then(data => updateReactionCounts(postId, data.reactions));
+}
+
+function toggleComments(postId) {
+    const commentsSection = document.querySelector(`#comments-${postId}`);
+    $(commentsSection).collapse('toggle');
+}
+
+function submitComment(event, postId) {
+    event.preventDefault();
+    const form = event.target;
+    const content = form.querySelector('textarea').value;
+    
+    fetch(`/api/posts/${postId}/comment/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ content })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addCommentToList(postId, data.comment);
+            form.reset();
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
+{% endblock %}

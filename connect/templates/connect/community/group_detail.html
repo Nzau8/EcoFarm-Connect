@@ -1,0 +1,513 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+{% csrf_token %}
+<div class="container" data-group-id="{{ group.id }}">
+    <!-- Group Header -->
+    <div class="group-header mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="group-avatar me-3">
+                                {% if group.cover_image %}
+                                    <img src="{{ group.cover_image.url }}" 
+                                         alt="{{ group.name }}" 
+                                         class="rounded"
+                                         style="width: 80px; height: 80px; object-fit: cover;">
+                                {% else %}
+                                    <img src="{% static 'connect/images/default-group-cover.jpg' %}" 
+                                         alt="{{ group.name }}" 
+                                         class="rounded"
+                                         style="width: 80px; height: 80px; object-fit: cover;">
+                                {% endif %}
+                            </div>
+                            <div class="group-info">
+                                <div class="d-flex align-items-center">
+                                    <h2 class="mb-0 me-2">{{ group.name }}</h2>
+                                    {% if group.is_private %}
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-lock"></i> Private
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-muted mb-0">
+                                    Created {{ group.created_at|timesince }} ago
+                                    · {{ group.members.count }} members
+                                </p>
+                            </div>
+                        </div>
+                        <p class="group-description mb-0">
+                            {{ group.description }}
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-end">
+                            {% if request.user == group.creator %}
+                            <a href="{% url 'connect:edit_group' group.id %}" 
+                               class="btn btn-outline-primary me-2">
+                                <i class="bi bi-gear"></i> Settings
+                            </a>
+                            {% elif request.user in group.members.all %}
+                            <button class="btn btn-outline-danger" onclick="leaveGroup()">
+                                Leave Group
+                            </button>
+                            {% elif group.is_private %}
+                            <button class="btn btn-primary" onclick="requestJoin()">
+                                Request to Join
+                            </button>
+                            {% else %}
+                            <button class="btn btn-primary" onclick="joinGroup()">
+                                Join Group
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Create Post Card (for members only) -->
+            {% if request.user in group.members.all %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="post" action="{% url 'connect:create_post' %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="group" value="{{ group.id }}">
+                        <div class="mb-3">
+                            <textarea class="form-control" 
+                                      name="content" 
+                                      rows="3" 
+                                      placeholder="Share something with the group..."></textarea>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group">
+                                <label class="btn btn-outline-secondary" for="postImage">
+                                    <i class="bi bi-image"></i> Add Image
+                                </label>
+                                <input type="file" 
+                                       id="postImage" 
+                                       name="image" 
+                                       accept="image/*" 
+                                       style="display: none;">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Post</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Group Posts -->
+            <div class="posts-container">
+                {% for post in group_posts %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <!-- Post Header -->
+                        <div class="d-flex align-items-center mb-3">
+                            {% if post.author.profile.profile_picture %}
+                            <img src="{{ post.author.profile.profile_picture.url }}" 
+                                 alt="{{ post.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                            <img src="{% static 'connect/images/default_profile.png' %}" 
+                                 alt="{{ post.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'connect:profile' username=post.author.username %}" 
+                                       class="text-decoration-none">
+                                        {{ post.author.get_full_name|default:post.author.username }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    {{ post.created_at|timesince }} ago
+                                    {% if post.edited %}
+                                    · Edited
+                                    {% endif %}
+                                </small>
+                            </div>
+                            
+                            {% if post.author == request.user or request.user == group.creator %}
+                            <div class="dropdown">
+                                <button class="btn btn-link text-muted" 
+                                        type="button" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if post.author == request.user %}
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{% url 'connect:edit_post' post.id %}">
+                                            <i class="bi bi-pencil"></i> Edit
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                    <li>
+                                        <button class="dropdown-item text-danger" 
+                                                onclick="deletePost({{ post.id }})">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Post Content -->
+                        <div class="post-content mb-3">
+                            <div class="post-text">
+                                {{ post.content|linebreaks }}
+                            </div>
+                            {% if post.image %}
+                            <div class="post-image mt-3">
+                                <img src="{{ post.image.url }}" 
+                                     alt="Post image" 
+                                     class="img-fluid rounded">
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Post Interactions -->
+                        <div class="post-interactions">
+                            <div class="d-flex align-items-center">
+                                <button class="btn btn-link text-decoration-none me-3" 
+                                        onclick="toggleLike({{ post.id }})">
+                                    <i class="bi {% if user in post.likes.all %}bi-heart-fill text-danger{% else %}bi-heart{% endif %}"></i>
+                                    <span id="likeCount-{{ post.id }}">{{ post.likes.count }}</span>
+                                </button>
+                                <a href="{% url 'connect:post_detail' post.id %}" 
+                                   class="btn btn-link text-decoration-none">
+                                    <i class="bi bi-chat"></i>
+                                    <span>{{ post.comments.count }}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="bi bi-chat-square-text display-1 text-muted"></i>
+                    <h4 class="mt-3">No Posts Yet</h4>
+                    <p class="text-muted">Be the first to post in this group!</p>
+                </div>
+                {% endfor %}
+
+                {% if group_posts.has_other_pages %}
+                <nav aria-label="Group posts navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if group_posts.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" 
+                               href="?page={{ group_posts.previous_page_number }}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in group_posts.paginator.page_range %}
+                        <li class="page-item {% if group_posts.number == num %}active{% endif %}">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                        {% endfor %}
+
+                        {% if group_posts.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" 
+                               href="?page={{ group_posts.next_page_number }}">
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Group Stats -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Group Stats</h5>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Members</span>
+                        <span>{{ group.members.count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Posts</span>
+                        <span>{{ group_posts.paginator.count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Created</span>
+                        <span>{{ group.created_at|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members List -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Members</h5>
+                    {% if group.members.count > 6 %}
+                    <a href="{% url 'connect:group_members' group.id %}" 
+                       class="btn btn-link btn-sm">
+                        View All
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="members-list">
+                        {% for member in group.members.all|slice:":6" %}
+                        <div class="member-item d-flex align-items-center mb-2">
+                            {% if member.profile.profile_picture %}
+                            <img src="{{ member.profile.profile_picture.url }}" 
+                                 alt="{{ member.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 32px; height: 32px; object-fit: cover;">
+                            {% else %}
+                            <img src="{% static 'connect/images/default_profile.png' %}" 
+                                 alt="{{ member.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 32px; height: 32px; object-fit: cover;">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'connect:profile' username=member.username %}" 
+                                       class="text-decoration-none">
+                                        {{ member.get_full_name|default:member.username }}
+                                    </a>
+                                </h6>
+                                {% if member == group.creator %}
+                                <small class="text-muted">Creator</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Join Requests (for private groups, visible to creator only) -->
+            {% if group.is_private and request.user == group.creator %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Join Requests</h5>
+                </div>
+                <div class="card-body">
+                    {% if join_requests %}
+                    <div class="join-requests-list">
+                        {% for request in join_requests %}
+                        <div class="request-item d-flex align-items-center mb-2">
+                            <img src="{{ request.user.profile.profile_picture.url|default:'default_profile.jpg' }}" 
+                                 alt="{{ request.user.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 32px; height: 32px; object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">
+                                    <a href="{% url 'connect:profile' username=request.user.username %}" 
+                                       class="text-decoration-none">
+                                        {{ request.user.get_full_name|default:request.user.username }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">
+                                    Requested {{ request.created_at|timesince }} ago
+                                </small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-success" 
+                                        onclick="approveRequest({{ request.id }})">
+                                    <i class="bi bi-check"></i>
+                                </button>
+                                <button class="btn btn-danger" 
+                                        onclick="rejectRequest({{ request.id }})">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-0">No pending join requests</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Join group
+    function joinGroup() {
+        fetch('{% url "connect:join_group" group.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+
+    // Request to join private group
+    function requestJoin() {
+        fetch('{% url "connect:request_join_group" group.id %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                const button = document.querySelector('button[onclick="requestJoin()"]');
+                button.disabled = true;
+                button.textContent = 'Request Sent';
+            }
+        });
+    }
+
+    // Leave group
+    function leaveGroup() {
+        if (confirm('Are you sure you want to leave this group?')) {
+            fetch('{% url "connect:leave_group" group.id %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    // Handle join requests
+    function approveRequest(requestId) {
+        fetch(`/community/group/request/${requestId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                document.querySelector(`.request-item[data-id="${requestId}"]`).remove();
+            }
+        });
+    }
+
+    function rejectRequest(requestId) {
+        fetch(`/community/group/request/${requestId}/reject/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                document.querySelector(`.request-item[data-id="${requestId}"]`).remove();
+            }
+        });
+    }
+
+    // Toggle post like
+    function toggleLike(postId) {
+        fetch(`/community/post/${postId}/like/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const likeButton = document.querySelector(`button[onclick="toggleLike(${postId})"]`);
+            const likeIcon = likeButton.querySelector('i');
+            const likeCount = document.getElementById(`likeCount-${postId}`);
+            
+            if (data.liked) {
+                likeIcon.classList.remove('bi-heart');
+                likeIcon.classList.add('bi-heart-fill', 'text-danger');
+            } else {
+                likeIcon.classList.remove('bi-heart-fill', 'text-danger');
+                likeIcon.classList.add('bi-heart');
+            }
+            
+            likeCount.textContent = data.count;
+        });
+    }
+
+    // Delete post
+    function deletePost(postId) {
+        if (confirm('Are you sure you want to delete this post?')) {
+            fetch(`/community/post/${postId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    // Preview post image
+    document.getElementById('postImage')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'mt-2';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" 
+                         alt="Preview" 
+                         class="img-fluid rounded" 
+                         style="max-height: 200px;">
+                    <button type="button" 
+                            class="btn btn-sm btn-outline-danger mt-1"
+                            onclick="removeImage()">
+                        Remove Image
+                    </button>
+                `;
+                
+                const existingPreview = document.querySelector('.image-preview');
+                if (existingPreview) {
+                    existingPreview.remove();
+                }
+                
+                preview.classList.add('image-preview');
+                document.querySelector('form').insertBefore(preview, document.querySelector('form .btn-group').parentNode);
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function removeImage() {
+        document.getElementById('postImage').value = '';
+        document.querySelector('.image-preview')?.remove();
+    }
+</script>
+{% endblock %} 

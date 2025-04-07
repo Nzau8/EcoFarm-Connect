@@ -1,0 +1,113 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Create Live Stream</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">Stream Title</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.title.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Choose a catchy title for your stream.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Describe what you'll be streaming about.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.scheduled_start.id_for_label }}" class="form-label">Start Time</label>
+                            {{ form.scheduled_start }}
+                            {% if form.scheduled_start.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.scheduled_start.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">When do you plan to start streaming?</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ form.group.id_for_label }}" class="form-label">Stream in Group (Optional)</label>
+                            {{ form.group }}
+                            {% if form.group.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.group.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Select a group to stream to, or leave empty to stream to all followers.</div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <h5 class="alert-heading"><i class="bi bi-info-circle"></i> Streaming Guidelines</h5>
+                            <ul class="mb-0">
+                                <li>Ensure you have a stable internet connection</li>
+                                <li>Test your audio and video before going live</li>
+                                <li>Follow community guidelines during your stream</li>
+                                <li>Your stream key will be provided after creation</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create Stream</button>
+                            <a href="{% url 'connect:live_streams' %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .alert-info {
+        background-color: rgba(var(--bs-info-rgb), 0.1);
+        border-color: rgba(var(--bs-info-rgb), 0.2);
+    }
+    
+    .alert-info .alert-heading {
+        color: var(--bs-info);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .alert-info ul {
+        padding-left: 1.2rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+</style>
+{% endblock %} 

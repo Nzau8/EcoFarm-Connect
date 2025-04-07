@@ -5,157 +5,63 @@
 
 {% block extra_css %}
 <style>
-    .admin-container {
-     background-color: #f8f9fa;
-     min-height: calc(100vh - 60px);
-     padding: 20px;
- }
- 
- .sidebar {
-     background: #2c3e50;
-     color: #fff;
-     min-height: calc(100vh - 60px);
-     padding: 20px 0;
- }
- 
- .sidebar .nav-link {
-     color: #ecf0f1;
-     padding: 10px 20px;
-     transition: all 0.3s;
- }
- 
- .sidebar .nav-link:hover {
-     background: #34495e;
-     padding-left: 25px;
- }
- 
- .sidebar .nav-link i {
-     width: 25px;
-     margin-right: 10px;
- }
- .sidebar {
-     background: #2c3e50;
-     color: #fff;
-     min-height: calc(100vh - 60px);
-     padding: 20px 0;
-     border-right: 3px solid #1abc9c;
- }
- .sidebar h4 {
-     text-align: center;
-     padding: 15px 0;
-     margin-bottom: 20px;
-     font-size: 1.4rem;
-     font-weight: 600;
-     text-transform: uppercase;
-     letter-spacing: 0.05rem;
-     border-bottom: 2px solid #1abc9c;
- }
- .sidebar a {
-     display: block;
-     padding: 12px 25px;
-     font-size: 1.1rem;
-     color: #ecf0f1;
-     text-decoration: none;
-     transition: all 0.3s;
- }
- .sidebar a:hover {
-     background: #34495e;
-     padding-left: 30px;
- }
- .sidebar a.active {
-     background: #1abc9c;
-     color: #fff;
- }
- 
- .stats-card {
-     border: none;
-     border-radius: 10px;
-     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-     transition: transform 0.3s;
-     text-align: center;
-     padding: 20px;
-     color: white;
-     text-decoration: none;
-     display: block;
- }
- 
- .stats-card:hover {
-     transform: translateY(-5px);
-     text-decoration: none;
- }
- 
- .stats-icon {
-     font-size: 2.5rem;
-     opacity: 0.8;
- }
- 
- .stats-info h3 {
-     font-size: 1.8rem;
-     margin: 0;
- }
- 
- .stats-info p {
-     margin: 0;
-     opacity: 0.8;
- }
- 
- .activity-card {
-     background: white;
-     border: none;
-     border-radius: 10px;
-     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-     padding: 15px;
- }
- 
- .activity-item {
-     padding: 15px;
-     border-bottom: 1px solid #eee;
-     transition: background-color 0.3s;
- }
- 
- .activity-item:hover {
-     background-color: #f8f9fa;
- }
- 
- .activity-item:last-child {
-     border-bottom: none;
- }
- 
- .badge {
-     font-size: 0.9rem;
-     padding: 5px 10px;
-     border-radius: 5px;
- }
- 
- /* Gradient backgrounds */
- .bg-gradient-primary {
-     background: linear-gradient(45deg, #4e73df, #224abe);
- }
- 
- .bg-gradient-success {
-     background: linear-gradient(45deg, #1cc88a, #13855c);
- }
- 
- .bg-gradient-info {
-     background: linear-gradient(45deg, #36b9cc, #258391);
- }
- 
- .bg-gradient-warning {
-     background: linear-gradient(45deg, #f6c23e, #dda20a);
- }
- 
- /* Responsive adjustments */
- @media (max-width: 768px) {
-     .sidebar {
-         min-height: auto;
-     }
-     
-     .stats-card {
-         margin-bottom: 15px;
-     }
- }
- 
- </style>
+.admin-container {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 60px);
+}
+
+.sidebar {
+    background: #2c3e50;
+    color: #fff;
+    min-height: calc(100vh - 60px);
+    padding: 20px 0;
+}
+
+.sidebar .nav-link {
+    color: #ecf0f1;
+    padding: 10px 20px;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background: #34495e;
+    padding-left: 25px;
+}
+
+.stats-card {
+    border-radius: 10px;
+    text-decoration: none;
+    transition: transform 0.3s ease;
+    display: block;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #4e73df, #224abe);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(45deg, #1cc88a, #13855c);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(45deg, #36b9cc, #258391);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(45deg, #f6c23e, #dda20a);
+}
+
+.recent-activity {
+    border-left: 3px solid;
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -163,10 +69,14 @@
     <div class="row g-0">
         <div class="col-md-2 sidebar">
             <h4>Admin Menu</h4>
-            <a href="#">Dashboard</a>
-            <a href="#">Users</a>
-            <a href="#">Orders</a>
-            <a href="#">Products</a>
+            <nav class="nav flex-column">
+                <a class="nav-link active" href="{% url 'connect:admin_dashboard' %}">Dashboard</a>
+                <a class="nav-link" href="{% url 'connect:admin_users' %}">Users</a>
+                <a class="nav-link" href="{% url 'connect:admin_orders' %}">Orders</a>
+                <a class="nav-link" href="{% url 'connect:admin_products' %}">Products</a>
+                <a class="nav-link" href="{% url 'connect:admin_courses' %}">Courses</a>
+                <a class="nav-link" href="{% url 'connect:admin_reports' %}">Reports</a>
+            </nav>
         </div>
         
         <div class="col-md-10 p-4">
@@ -174,59 +84,62 @@
             
             <div class="row mb-4">
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="#" class="stats-card bg-gradient-primary text-white p-3">
+                    <a href="{% url 'connect:admin_users' %}" class="stats-card bg-gradient-primary text-white p-3">
                         <h3>{{ total_users }}</h3>
                         <p>Total Users</p>
                     </a>
                 </div>
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="{% url 'connect:marketplacehome' %}" class="stats-card bg-gradient-success text-white p-3">
+                    <a href="{% url 'connect:admin_products' %}" class="stats-card bg-gradient-success text-white p-3">
                         <h3>{{ total_products }}</h3>
-                        <p>Products</p>
+                        <p>Products Listed</p>
                     </a>
                 </div>
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="#" class="stats-card bg-gradient-info text-white p-3">
+                    <a href="{% url 'connect:admin_orders' %}" class="stats-card bg-gradient-info text-white p-3">
                         <h3>{{ total_orders }}</h3>
-                        <p>Orders</p>
+                        <p>Total Orders</p>
                     </a>
                 </div>
                 <div class="col-xl-3 col-md-6 mb-4">
-                    <a href="#" class="stats-card bg-gradient-warning text-white p-3">
-                        <h3>KES {{ total_earnings|floatformat:2 }}</h3>
+                    <a href="{% url 'connect:admin_earnings' %}" class="stats-card bg-gradient-warning text-white p-3">
+                        <h3>KES {{ total_earnings }}</h3>
                         <p>Total Earnings</p>
                     </a>
                 </div>
             </div>
-            
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="activity-card">
-                        <h5>Recent Orders</h5>
-                        {% for order in recent_orders %}
-                        <div class="activity-item">
-                            <h6>Order #{{ order.id }}</h6>
-                            <small>{{ order.buyer.username }}</small>
-                            <span class="badge {% if order.delivery_status == 'DELIVERED' %}bg-success{% elif order.delivery_status == 'PENDING' %}bg-warning{% else %}bg-info{% endif %}">
-                                {{ order.delivery_status|title }}
-                            </span>
-                        </div>
-                        {% empty %}
-                        <p class="text-muted">No recent orders</p>
-                        {% endfor %}
-                    </div>
+
+            <!-- Recent Activities -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activities</h5>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="activity-card">
-                        <h5>Recent Users</h5>
-                        {% for user in recent_users %}
-                        <div class="activity-item">
-                            <h6>{{ user.username }}</h6>
-                            <small>Joined {{ user.date_joined|date:"M d, Y" }}</small>
-                        </div>
-                        {% empty %}
-                        <p class="text-muted">No new users</p>
-                        {% endfor %}
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Activity</th>
+                                    <th>User</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for activity in recent_activities %}
+                                <tr>
+                                    <td>{{ activity.description }}</td>
+                                    <td>{{ activity.user.username }}</td>
+                                    <td>{{ activity.created_at|timesince }} ago</td>
+                                    <td>
+                                        <span class="badge bg-{{ activity.get_status_color }}">
+                                            {{ activity.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>

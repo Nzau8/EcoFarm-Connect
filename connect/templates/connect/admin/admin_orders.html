@@ -1,0 +1,193 @@
+{% extends 'connect/base.html' %}
+{% load static %}
+
+{% block title %}Manage Orders - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="row g-0">
+        <!-- Admin Sidebar -->
+        <div class="col-md-2 sidebar">
+            <h4>Admin Menu</h4>
+            <nav class="nav flex-column">
+                <a class="nav-link" href="{% url 'connect:admin_dashboard' %}">Dashboard</a>
+                <a class="nav-link" href="{% url 'connect:admin_users' %}">Users</a>
+                <a class="nav-link active" href="{% url 'connect:admin_orders' %}">Orders</a>
+                <a class="nav-link" href="{% url 'connect:admin_products' %}">Products</a>
+                <a class="nav-link" href="{% url 'connect:admin_courses' %}">Courses</a>
+                <a class="nav-link" href="{% url 'connect:admin_reports' %}">Reports</a>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-10 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Order Management</h2>
+                
+                <!-- Search and Filter -->
+                <div class="d-flex">
+                    <form class="d-flex me-2" method="get">
+                        <input type="search" name="search" class="form-control me-2" 
+                               placeholder="Search orders..." value="{{ request.GET.search }}">
+                        <button class="btn btn-outline-success" type="submit">Search</button>
+                    </form>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" 
+                                id="filterDropdown" data-bs-toggle="dropdown">
+                            Filter
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="?status=pending">Pending</a></li>
+                            <li><a class="dropdown-item" href="?status=processing">Processing</a></li>
+                            <li><a class="dropdown-item" href="?status=completed">Completed</a></li>
+                            <li><a class="dropdown-item" href="?status=cancelled">Cancelled</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                <tr>
+                                    <td>#{{ order.id }}</td>
+                                    <td>{{ order.buyer.get_full_name|default:order.buyer.username }}</td>
+                                    <td>{{ order.created_at|date:"M d, Y" }}</td>
+                                    <td>KES {{ order.total_price }}</td>
+                                    <td>
+                                        <span class="badge {% if order.status == 'completed' %}bg-success
+                                                         {% elif order.status == 'pending' %}bg-warning
+                                                         {% elif order.status == 'cancelled' %}bg-danger
+                                                         {% else %}bg-info{% endif %}">
+                                            {{ order.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'connect:admin_order_detail' order.id %}" 
+                                               class="btn btn-sm btn-info">View</a>
+                                            {% if order.status == 'pending' %}
+                                            <button type="button" class="btn btn-sm btn-success"
+                                                    onclick="updateOrderStatus({{ order.id }}, 'processing')">
+                                                Process
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No orders found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if orders.has_other_pages %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if orders.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in orders.paginator.page_range %}
+                            <li class="page-item {% if orders.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if orders.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ orders.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateOrderStatus(orderId, status) {
+    if (confirm('Are you sure you want to update this order\'s status?')) {
+        fetch(`{% url 'connect:admin_update_order' %}${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-container {
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 60px);
+}
+
+.sidebar {
+    background: #2c3e50;
+    color: #fff;
+    min-height: calc(100vh - 60px);
+    padding: 20px 0;
+}
+
+.sidebar .nav-link {
+    color: #ecf0f1;
+    padding: 10px 20px;
+    transition: all 0.3s;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+    background: #34495e;
+    padding-left: 25px;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+}
+
+.table > :not(caption) > * > * {
+    padding: 1rem 0.5rem;
+}
+
+.btn-group {
+    gap: 0.25rem;
+}
+</style>
+{% endblock %}

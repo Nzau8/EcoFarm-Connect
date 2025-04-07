@@ -82,7 +82,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-success">
         <div class="container-fluid">
-            <a class="navbar-brand text-light" href="{% url 'home' %}">EcoFarm Connect</a>
+            <a class="navbar-brand text-light" href="{% url 'connect:home' %}">EcoFarm Connect</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -90,22 +90,22 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'home' %}">Home</a>
+                        <a class="nav-link text-light" href="{% url 'connect:home' %}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'about' %}">About</a>
+                        <a class="nav-link text-light" href="{% url 'connect:about' %}">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'marketplacehome' %}">Marketplace</a>
+                        <a class="nav-link text-light" href="{% url 'connect:marketplacehome' %}">Marketplace</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'learninghub' %}">Learning Hub</a>
+                        <a class="nav-link text-light" href="{% url 'connect:learninghub' %}">Learning Hub</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'communityhome' %}">Community</a>
+                        <a class="nav-link text-light" href="{% url 'connect:community_home' %}">Community</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-light" href="{% url 'contact' %}">Contacts</a>
+                        <a class="nav-link text-light" href="{% url 'connect:contact' %}">Contacts</a>
                     </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
@@ -114,8 +114,8 @@
                                 <i class="bi bi-person-circle"></i> {{ user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="{% url 'profile' %}">Profile</a></li>
-                                <form method="post" action="{% url 'logout' %}" style="display: inline;">
+                                <li><a class="dropdown-item" href="{% url 'connect:profile' username=user.username %}">Profile</a></li>
+                                <form method="post" action="{% url 'connect:logout' %}" style="display: inline;">
                                     {% csrf_token %}
                                     <button type="submit" class="dropdown-item">Logout</button>
                                 </form>
@@ -124,10 +124,10 @@
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link text-light" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link text-light" href="{% url 'connect:login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-light" href="{% url 'signup' %}">Signup</a>
+                            <a class="nav-link text-light" href="{% url 'connect:signup' %}">Signup</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -154,6 +154,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Font Awesome for Social Icons -->
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 
 </html>

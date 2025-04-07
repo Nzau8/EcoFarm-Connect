@@ -42,10 +42,24 @@
                                 <div class="invalid-feedback">Please enter a valid email</div>
                             </div>
                             <div class="mb-3 floating-label">
+                                <input type="text" class="form-control" id="subject" name="subject" required>
+                                <label for="subject">Subject</label>
+                                <div class="invalid-feedback">Please enter a subject</div>
+                            </div>
+                            <div class="mb-3 floating-label">
                                 <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
                                 <label for="message">Your Message</label>
                                 <div class="invalid-feedback">Please enter your message</div>
                             </div>
+                            {% if messages %}
+                            <div class="mb-3">
+                                {% for message in messages %}
+                                    <div class="alert alert-{{ message.tags }}">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
                             <button type="submit" class="btn btn-primary w-100">
                                 Send Message
                                 <i class="bi bi-arrow-right ms-2"></i>

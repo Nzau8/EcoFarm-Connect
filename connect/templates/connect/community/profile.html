@@ -1,0 +1,621 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-cover">
+            <div class="profile-avatar">
+                {% if profile.profile_picture %}
+                    <img src="{{ profile.profile_picture.url }}" 
+                         alt="{{ profile.user.username }}"
+                         class="avatar-img">
+                {% else %}
+                    <img src="{% static 'connect/images/default-profile.jpg' %}" 
+                         alt="{{ profile.user.username }}"
+                         class="avatar-img">
+                {% endif %}
+                {% if request.user == profile.user %}
+                <button class="btn btn-light btn-sm change-avatar" 
+                        onclick="document.getElementById('profile_picture').click()">
+                    <i class="bi bi-camera"></i>
+                </button>
+                <input type="file" id="profile_picture" name="profile_picture" 
+                       style="display: none;" accept="image/*"
+                       onchange="updateProfilePicture(this)">
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="profile-info">
+            <div class="profile-name">
+                <h2>{{ profile.user.get_full_name|default:profile.user.username }}</h2>
+                {% if profile.user.role == 'seller' %}
+                <span class="badge bg-success">Seller</span>
+                {% elif profile.user.role == 'buyer' %}
+                <span class="badge bg-primary">Buyer</span>
+                {% elif profile.user.role == 'bodarider' %}
+                <span class="badge bg-warning">Boda Rider</span>
+                {% endif %}
+            </div>
+            
+            <div class="profile-meta">
+                <div class="meta-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <span>{{ profile.location|default:"Location not set" }}</span>
+                </div>
+                {% if profile.website %}
+                <div class="meta-item">
+                    <i class="bi bi-link-45deg"></i>
+                    <a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a>
+                </div>
+                {% endif %}
+                <div class="meta-item">
+                    <i class="bi bi-calendar3"></i>
+                    <span>Joined {{ profile.created_at|date:"F Y" }}</span>
+                </div>
+            </div>
+            
+            {% if profile.bio %}
+            <p class="profile-bio">{{ profile.bio }}</p>
+            {% endif %}
+            
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ followers_count }}</span>
+                    <span class="stat-label">Followers</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ following_count }}</span>
+                    <span class="stat-label">Following</span>
+                </div>
+                {% if profile.user.role == 'seller' %}
+                <div class="stat-item">
+                    <span class="stat-value">{{ profile.user.products.count }}</span>
+                    <span class="stat-label">Products</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="profile-actions">
+                {% if request.user != profile.user %}
+                <button class="btn {% if is_following %}btn-outline-success{% else %}btn-success{% endif %}"
+                        onclick="toggleFollow({{ profile.user.id }})">
+                    <i class="bi {% if is_following %}bi-person-dash{% else %}bi-person-plus{% endif %}"></i>
+                    <span class="follow-text">
+                        {% if is_following %}Unfollow{% else %}Follow{% endif %}
+                    </span>
+                </button>
+                <button class="btn btn-outline-primary" onclick="startChat({{ profile.user.id }})">
+                    <i class="bi bi-chat"></i> Message
+                </button>
+                <div class="dropdown d-inline-block">
+                    <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="reportUser({{ profile.user.id }})">
+                                <i class="bi bi-flag"></i> Report User
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="#" 
+                               onclick="blockUser({{ profile.user.id }})">
+                                <i class="bi bi-slash-circle"></i> Block User
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% else %}
+                <a href="{% url 'connect:edit_profile' %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Edit Profile
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Content Tabs -->
+    <div class="profile-tabs">
+        <ul class="nav nav-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#posts" type="button">
+                    <i class="bi bi-grid"></i> Posts
+                </button>
+            </li>
+            {% if profile.user.role == 'seller' %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#products" type="button">
+                    <i class="bi bi-bag"></i> Products
+                </button>
+            </li>
+            {% endif %}
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#about" type="button">
+                    <i class="bi bi-person"></i> About
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+            <!-- Posts Tab -->
+            <div class="tab-pane fade show active" id="posts">
+                {% for post in posts %}
+                <div class="post-card">
+                    <!-- Post content here (reuse from home.html) -->
+                </div>
+                {% empty %}
+                <div class="no-content">
+                    <i class="bi bi-newspaper"></i>
+                    <h5>No Posts Yet</h5>
+                    {% if request.user == profile.user %}
+                    <p>Share your first post with the community!</p>
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createPostModal">
+                        <i class="bi bi-plus-circle"></i> Create Post
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if profile.user.role == 'seller' %}
+            <!-- Products Tab -->
+            <div class="tab-pane fade" id="products">
+                <div class="products-grid">
+                    {% for product in profile.user.products.all %}
+                    <div class="product-card">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        <div class="product-info">
+                            <h6>{{ product.name }}</h6>
+                            <p class="price">KES {{ product.price }}</p>
+                            <a href="{% url 'connect:product_detail' product_id=product.id %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                View Product
+                            </a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="no-content">
+                        <i class="bi bi-bag"></i>
+                        <h5>No Products Listed</h5>
+                        {% if request.user == profile.user %}
+                        <p>Start selling by adding your first product!</p>
+                        <a href="{% url 'connect:add_product' %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Add Product
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- About Tab -->
+            <div class="tab-pane fade" id="about">
+                <div class="about-section">
+                    {% if profile.user.role == 'seller' %}
+                    <div class="info-group">
+                        <h6>Business Information</h6>
+                        <div class="info-item">
+                            <i class="bi bi-building"></i>
+                            <div class="info-content">
+                                <label>Company Name</label>
+                                <span>{{ profile.user.seller.company_name }}</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-geo-alt"></i>
+                            <div class="info-content">
+                                <label>Business Location</label>
+                                <span>{{ profile.user.seller.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="info-group">
+                        <h6>Contact Information</h6>
+                        {% if profile.user.role == 'seller' or profile.user.role == 'buyer' %}
+                        <div class="info-item">
+                            <i class="bi bi-envelope"></i>
+                            <div class="info-content">
+                                <label>Email</label>
+                                <span>{{ profile.user.email }}</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="info-item">
+                            <i class="bi bi-telephone"></i>
+                            <div class="info-content">
+                                <label>Phone</label>
+                                <span>{{ profile.user.phone_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if profile.user.role == 'bodarider' %}
+                    <div class="info-group">
+                        <h6>Rider Information</h6>
+                        <div class="info-item">
+                            <i class="bi bi-bicycle"></i>
+                            <div class="info-content">
+                                <label>Bike Model</label>
+                                <span>{{ profile.user.bodarider.bike_model }}</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <i class="bi bi-card-text"></i>
+                            <div class="info-content">
+                                <label>License Number</label>
+                                <span>{{ profile.user.bodarider.license_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .profile-header {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .profile-cover {
+        height: 200px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        position: relative;
+    }
+
+    .profile-avatar {
+        position: absolute;
+        bottom: -50px;
+        left: 2rem;
+    }
+
+    .avatar-img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        border: 4px solid white;
+        background: white;
+        object-fit: cover;
+    }
+
+    .change-avatar {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        padding: 0.25rem;
+        border-radius: 50%;
+    }
+
+    .profile-info {
+        padding: 4rem 2rem 2rem;
+    }
+
+    .profile-name {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .profile-name h2 {
+        margin: 0;
+    }
+
+    .profile-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+    }
+
+    .profile-bio {
+        margin-bottom: 1.5rem;
+        white-space: pre-line;
+    }
+
+    .profile-stats {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        display: block;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .profile-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .profile-tabs {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-tabs {
+        border-bottom-color: #dee2e6;
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        padding: 0.75rem 1.5rem;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary);
+        border-bottom: 2px solid var(--primary);
+    }
+
+    .nav-tabs .nav-link i {
+        margin-right: 0.5rem;
+    }
+
+    .about-section {
+        max-width: 600px;
+    }
+
+    .info-group {
+        margin-bottom: 2rem;
+    }
+
+    .info-group h6 {
+        color: var(--primary);
+        margin-bottom: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-item i {
+        color: #6c757d;
+        font-size: 1.2rem;
+        width: 24px;
+    }
+
+    .info-content {
+        flex: 1;
+    }
+
+    .info-content label {
+        display: block;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+
+    .no-content {
+        text-align: center;
+        padding: 3rem;
+    }
+
+    .no-content i {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 576px) {
+        .profile-cover {
+            height: 150px;
+        }
+
+        .profile-avatar {
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .profile-info {
+            text-align: center;
+            padding-top: 5rem;
+        }
+
+        .profile-name {
+            justify-content: center;
+        }
+
+        .profile-meta {
+            justify-content: center;
+        }
+
+        .profile-stats {
+            justify-content: center;
+        }
+
+        .profile-actions {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="{% static 'js/community.js' %}"></script>
+<script>
+    function updateProfilePicture(input) {
+        if (input.files && input.files[0]) {
+            const formData = new FormData();
+            formData.append('profile_picture', input.files[0]);
+            
+            fetch('{% url "connect:update_profile_picture" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector('.avatar-img').src = data.url;
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    function toggleFollow(userId) {
+        fetch(`/community/user/${userId}/follow/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const button = document.querySelector('.profile-actions button');
+                const icon = button.querySelector('i');
+                const text = button.querySelector('.follow-text');
+                
+                if (data.action === 'followed') {
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-outline-success');
+                    icon.classList.remove('bi-person-plus');
+                    icon.classList.add('bi-person-dash');
+                    text.textContent = 'Unfollow';
+                } else {
+                    button.classList.remove('btn-outline-success');
+                    button.classList.add('btn-success');
+                    icon.classList.remove('bi-person-dash');
+                    icon.classList.add('bi-person-plus');
+                    text.textContent = 'Follow';
+                }
+                
+                // Update followers count
+                document.querySelector('.stat-value').textContent = data.followers_count;
+            }
+        });
+    }
+
+    function startChat(userId) {
+        fetch(`/community/chat/start/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                user_id: userId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.href = data.chat_url;
+            }
+        });
+    }
+
+    function blockUser(userId) {
+        if (confirm('Are you sure you want to block this user?')) {
+            fetch(`/community/user/${userId}/block/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+    }
+
+    function reportUser(userId) {
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Report User</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form action="/community/report/" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="content_type" value="user">
+                        <input type="hidden" name="content_id" value="${userId}">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Reason for reporting</label>
+                                <textarea class="form-control" name="reason" rows="4" required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Submit Report</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        new bootstrap.Modal(modal).show();
+        modal.addEventListener('hidden.bs.modal', () => modal.remove());
+    }
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %} 

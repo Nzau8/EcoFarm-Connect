@@ -1,4 +1,4 @@
-{% extends 'layout.html' %}
+{% extends 'connect/base.html' %}
 
 {% block content %}
 <div class="container mt-5">
@@ -10,7 +10,7 @@
     <!-- List of Discussions -->
     <div class="list-group">
         {% for discussion in discussions %}
-        <a href="{% url 'discussion_details' discussion.id %}" class="list-group-item list-group-item-action">
+        <a href="{% url 'connect:discussiondetails' discussion.id %}" class="list-group-item list-group-item-action">
             <h5>{{ discussion.title }}</h5>
             <p>{{ discussion.description }}</p>
             <span class="badge badge-primary">{{ discussion.tags.all|join:", " }}</span>

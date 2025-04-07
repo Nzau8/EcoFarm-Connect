@@ -5,4 +5,4 @@ class ConnectConfig(AppConfig):
     name = 'connect'
 
     def ready(self):
-        import connect.signals  
+        import connect.signals  # Import signals when app is ready

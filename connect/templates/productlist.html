@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="text-success mb-4">My Products</h2>
+
+  {% if products %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+      {% for product in products %}
+        <div class="col">
+          <div class="card h-100 shadow-sm">
+            {% if product.image %}
+              <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}">
+            {% else %}
+              <img src="{% static 'images/placeholder.png' %}" class="card-img-top" alt="No image">
+            {% endif %}
+            <div class="card-body">
+              <h5 class="card-title">{{ product.name }}</h5>
+              <p class="card-text text-muted">{{ product.description|truncatewords:15 }}</p>
+              <p class="card-text fw-bold text-success">KES {{ product.price }}</p>
+              <p class="card-text"><small class="text-muted">Stock: {{ product.stock }} {{ product.unit }}</small></p>
+              <a href="{% url 'connect:editproduct' product.id %}" class="btn btn-sm btn-outline-success">Edit</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-warning">You haven't added any products yet.</div>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{% url 'connect:add_product' %}" class="btn btn-success">Add New Product</a>
+  </div>
+</div>
+{% endblock %}

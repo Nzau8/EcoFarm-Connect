@@ -1,23 +1,20 @@
 {% extends 'connect/base.html' %}
 {% load static %}
-{% load custom_filters %}
-
-{% block title %}Shopping Cart - Connect{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
   <h2>Shopping Cart</h2>
-  
+
   {% if cart_items %}
     <div class="table-responsive">
       <table class="table">
         <thead>
           <tr>
             <th>Product</th>
-            <th>Unit Price</th>
+            <th>Price</th>
             <th>Quantity</th>
             <th>Total</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -26,36 +23,38 @@
             <td>
               <div class="d-flex align-items-center">
                 {% if item.product.image %}
-                  <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
-                       class="img-thumbnail mr-3" style="max-width: 50px;">
+                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 50px; margin-right: 10px;">
                 {% endif %}
                 <div>
                   <h6 class="mb-0">{{ item.product.name }}</h6>
-                  <small class="text-muted">{{ item.product.unit }}</small>
+                  <small class="text-muted">Seller: {{ item.product.seller.company_name }}</small>
                 </div>
               </div>
             </td>
             <td>KES {{ item.product.price }}</td>
             <td>
-              <form method="POST" action="{% url 'connect:update_cart' item.id %}" class="form-inline">
-                {% csrf_token %}
-                <input type="number" name="quantity" value="{{ item.quantity }}" 
-                       min="1" max="{{ item.product.stock }}" 
-                       class="form-control form-control-sm" style="width: 70px;">
-                <button type="submit" class="btn btn-sm btn-outline-secondary ml-2">Update</button>
-              </form>
+              <div class="input-group" style="max-width: 120px;">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity({{ item.id }}, 'decrease')">-</button>
+                <input type="number" class="form-control text-center" value="{{ item.quantity }}" min="1" onchange="updateQuantity({{ item.id }}, 'set', this.value)">
+                <button class="btn btn-outline-secondary" onclick="updateQuantity({{ item.id }}, 'increase')">+</button>
+              </div>
             </td>
-            <td>KES {{ item.subtotal }}</td>
+            <td>KES {{ item.total_price }}</td>
             <td>
-              <form method="POST" action="{% url 'connect:remove_from_cart' item.id %}" 
-                    style="display: inline;">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
-              </form>
+              <button class="btn btn-danger btn-sm" onclick="removeFromCart({{ item.id }})">
+                <i class="bi bi-trash"></i>
+              </button>
             </td>
           </tr>
           {% endfor %}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3" class="text-end"><strong>Total:</strong></td>
+            <td><strong>KES {{ total_price }}</strong></td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
 
@@ -65,8 +64,7 @@
           Continue Shopping
         </a>
       </div>
-      <div class="col-md-6 text-right">
-        <h4>Total: KES {{ total_price }}</h4>
+      <div class="col-md-6 text-end">
         <a href="{% url 'connect:checkout' %}" class="btn btn-success">
           Proceed to Checkout
         </a>
@@ -82,4 +80,48 @@
     </div>
   {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(cartItemId, action, value = null) {
+  let url = `{% url 'connect:update_cart_quantity' %}${cartItemId}/`;
+  let data = { action: action };
+  if (value !== null) {
+    data.value = value;
+  }
+
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify(data)
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      location.reload();
+    }
+  });
+}
+
+function removeFromCart(cartItemId) {
+  if (confirm('Are you sure you want to remove this item from your cart?')) {
+    fetch(`{% url 'connect:remove_from_cart' %}${cartItemId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      }
+    });
+  }
+}
+</script>
 {% endblock %}

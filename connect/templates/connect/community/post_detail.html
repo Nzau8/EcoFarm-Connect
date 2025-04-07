@@ -1,0 +1,349 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block community_content %}
+<div class="container">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Post Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <!-- Post Header -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="d-flex align-items-center flex-grow-1">
+                            {% if post.author.profile.profile_picture %}
+                                <img src="{{ post.author.profile.profile_picture.url }}" 
+                                     alt="{{ post.author.username }}" 
+                                     class="rounded-circle me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <img src="{% static 'connect/images/default_profile.png' %}" 
+                                     alt="{{ post.author.username }}" 
+                                     class="rounded-circle me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0">
+                                    <a href="{% url 'connect:profile' username=post.author.username %}" 
+                                       class="text-decoration-none">
+                                        {{ post.author.get_full_name|default:post.author.username }}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ post.created_at|naturaltime }}</small>
+                            </div>
+                        </div>
+                        {% if request.user != post.author %}
+                        <button class="btn {% if request.user in post.author.profile.followers.all %}btn-primary{% else %}btn-outline-primary{% endif %} follow-button"
+                                data-user-id="{{ post.author.id }}"
+                                onclick="toggleFollow({{ post.author.id }})">
+                            {% if request.user in post.author.profile.followers.all %}
+                                Unfollow
+                            {% else %}
+                                Follow
+                            {% endif %}
+                        </button>
+                        {% endif %}
+                    </div>
+
+                    <!-- Post Content -->
+                    <div class="post-content mb-3">
+                        <div class="post-text">
+                            {{ post.content|linebreaks }}
+                        </div>
+                        {% if post.image %}
+                        <div class="post-image mt-3">
+                            <img src="{{ post.image.url }}" 
+                                 alt="Post image" 
+                                 class="img-fluid rounded">
+                        </div>
+                        {% endif %}
+                        {% if post.hashtags.exists %}
+                        <div class="post-hashtags mt-3">
+                            {% for tag in post.hashtags.all %}
+                            <a href="{% url 'connect:hashtag' name=tag.name %}" 
+                               class="badge bg-light text-dark text-decoration-none me-1">
+                                #{{ tag.name }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Post Interactions -->
+                    <div class="post-interactions">
+                        <!-- Reactions Summary -->
+                        <div class="reactions-summary mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="reactions-icons me-2">
+                                    {% for reaction_type, emoji in post.REACTION_CHOICES %}
+                                        {% with count=reaction_counts|get_item:reaction_type %}
+                                            {% if count > 0 %}
+                                            <span class="reaction-icon reaction-{{ reaction_type|lower }} {% if reaction_type == user_reaction %}active{% endif %}"
+                                                  data-bs-toggle="tooltip" 
+                                                  data-bs-placement="top"
+                                                  title="{{ count }} {{ reaction_type|title }}">
+                                                {{ emoji }}
+                                            </span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </div>
+                                <span class="reactions-count">
+                                    {{ post.get_reactions_count }} reactions
+                                </span>
+                                <span class="comments-count ms-3">
+                                    <i class="bi bi-chat-dots"></i>
+                                    {{ post.get_comments_count }} comments
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Interaction Buttons -->
+                        <div class="interaction-buttons mb-3">
+                            <div class="btn-group reaction-buttons" role="group">
+                                <button type="button" 
+                                        class="btn btn-light reaction-button {% if user_reaction %}active{% endif %}"
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-emoji-smile"></i> React
+                                </button>
+                                <div class="dropdown-menu reaction-menu">
+                                    <div class="reaction-options">
+                                        {% for reaction_type, emoji in post.REACTION_CHOICES %}
+                                        <button class="reaction-option" 
+                                                onclick="toggleReaction({{ post.id }}, '{{ reaction_type }}')" 
+                                                title="{{ reaction_type|title }}">
+                                            {{ emoji }}
+                                        </button>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-light" onclick="focusComment()">
+                                <i class="bi bi-chat-dots"></i> Comment
+                            </button>
+                            <button class="btn btn-light" onclick="sharePost({{ post.id }})">
+                                <i class="bi bi-share"></i> Share
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="comments-section">
+                        <h5 class="mb-3">Comments</h5>
+
+                        <!-- New Comment Form -->
+                        <form onsubmit="submitComment(event, {{ post.id }})" class="comment-form mb-4">
+                            <img src="{% if request.user.profile.profile_picture %}{{ request.user.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                 alt="{{ request.user.username }}" 
+                                 class="comment-avatar">
+                            <div class="flex-grow-1">
+                                <div class="d-flex gap-2 align-items-start">
+                                    <textarea class="form-control" 
+                                              name="content"
+                                              rows="1" 
+                                              placeholder="Write a comment..."
+                                              oninput="autoResize(this)"></textarea>
+                                    <button type="submit" class="btn btn-primary px-3 py-2">
+                                        <i class="bi bi-send fs-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Comments List -->
+                        <div class="comments-list" id="comments-{{ post.id }}">
+                            {% for comment in comments %}
+                            <div class="comment-thread" id="comment-{{ comment.id }}">
+                                <div class="comment-item">
+                                    <img src="{% if comment.author.profile.profile_picture %}{{ comment.author.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                         alt="{{ comment.author.username }}" 
+                                         class="comment-avatar">
+                                    <div class="comment-content">
+                                        <div class="comment-header">
+                                            <a href="{% url 'connect:profile' username=comment.author.username %}" 
+                                               class="comment-author">
+                                                {{ comment.author.get_full_name|default:comment.author.username }}
+                                            </a>
+                                            <span class="comment-time">{{ comment.created_at|naturaltime }}</span>
+                                        </div>
+                                        <p class="comment-text">{{ comment.content }}</p>
+                                        <div class="comment-actions">
+                                            <button class="btn btn-link btn-sm" onclick="likeComment({{ comment.id }})">
+                                                <i class="bi bi-hand-thumbs-up{% if comment.is_liked_by_user %}-fill{% endif %}"></i>
+                                                Like
+                                                {% if comment.get_likes_count > 0 %}
+                                                <span class="likes-count">({{ comment.get_likes_count }})</span>
+                                                {% endif %}
+                                            </button>
+                                            <button class="btn btn-link btn-sm" onclick="showReplyForm({{ comment.id }})">
+                                                Reply
+                                                {% if comment.get_replies_count > 0 %}
+                                                <span class="replies-count">({{ comment.get_replies_count }})</span>
+                                                {% endif %}
+                                            </button>
+                                        </div>
+
+                                        <!-- Reply Form -->
+                                        <div class="reply-form d-none" id="reply-form-{{ comment.id }}">
+                                            <form onsubmit="submitComment(event, {{ post.id }}, {{ comment.id }})" class="d-flex mt-2">
+                                                <img src="{% if request.user.profile.profile_picture %}{{ request.user.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                                     alt="{{ request.user.username }}" 
+                                                     class="comment-avatar comment-avatar-sm">
+                                                <div class="flex-grow-1">
+                                                    <div class="d-flex gap-2 align-items-start">
+                                                        <textarea class="form-control" 
+                                                                  name="content"
+                                                                  rows="1" 
+                                                                  placeholder="Write a reply..."
+                                                                  oninput="autoResize(this)"></textarea>
+                                                        <button type="submit" class="btn btn-primary px-3 py-2">
+                                                            <i class="bi bi-send fs-5"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <!-- Replies List -->
+                                        <div class="replies-list" id="replies-{{ comment.id }}">
+                                            {% for reply in comment.replies.all %}
+                                            <div class="comment-item reply" id="comment-{{ reply.id }}">
+                                                <img src="{% if reply.author.profile.profile_picture %}{{ reply.author.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                                     alt="{{ reply.author.username }}" 
+                                                     class="comment-avatar comment-avatar-sm">
+                                                <div class="comment-content">
+                                                    <div class="comment-header">
+                                                        <a href="{% url 'connect:profile' username=reply.author.username %}" 
+                                                           class="comment-author">
+                                                            {{ reply.author.get_full_name|default:reply.author.username }}
+                                                        </a>
+                                                        <span class="comment-time">{{ reply.created_at|naturaltime }}</span>
+                                                    </div>
+                                                    <p class="comment-text">{{ reply.content }}</p>
+                                                    <div class="comment-actions">
+                                                        <button class="btn btn-link btn-sm" onclick="likeComment({{ reply.id }})">
+                                                            <i class="bi bi-hand-thumbs-up{% if reply.is_liked_by_user %}-fill{% endif %}"></i>
+                                                            Like
+                                                            {% if reply.get_likes_count > 0 %}
+                                                            <span class="likes-count">({{ reply.get_likes_count }})</span>
+                                                            {% endif %}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted">No comments yet. Be the first to comment!</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Author Info -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">About the Author</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        {% if post.author.profile.profile_picture %}
+                            <img src="{{ post.author.profile.profile_picture.url }}" 
+                                 alt="{{ post.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                        {% else %}
+                            <img src="{% static 'connect/images/default_profile.png' %}" 
+                                 alt="{{ post.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-0">{{ post.author.get_full_name|default:post.author.username }}</h6>
+                            <small class="text-muted">
+                                <span class="followers-count" data-user-id="{{ post.author.id }}">
+                                    {{ post.author.profile.get_followers_count }}
+                                </span> 
+                                followers
+                            </small>
+                        </div>
+                    </div>
+                    {% if post.author.profile.bio %}
+                    <p class="mb-3">{{ post.author.profile.bio }}</p>
+                    {% endif %}
+                    {% if request.user != post.author %}
+                    <button class="btn btn-primary w-100 follow-button" 
+                            data-user-id="{{ post.author.id }}"
+                            onclick="toggleFollow({{ post.author.id }})">
+                        {% if request.user in post.author.profile.followers.all %}
+                            Unfollow
+                        {% else %}
+                            Follow
+                        {% endif %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Similar Posts -->
+            {% if similar_posts %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Similar Posts</h5>
+                    {% for similar_post in similar_posts %}
+                    <div class="similar-post mb-3">
+                        <a href="{% url 'connect:post_detail' similar_post.id %}" 
+                           class="text-decoration-none">
+                            <h6 class="mb-1">{{ similar_post.content|truncatechars:100 }}</h6>
+                        </a>
+                        <small class="text-muted">
+                            {{ similar_post.created_at|naturaltime }}
+                            · {{ similar_post.get_comments_count }} comments
+                            · {{ similar_post.get_reactions_count }} reactions
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Share post
+    function sharePost(postId) {
+        const url = window.location.href;
+        if (navigator.share) {
+            navigator.share({
+                title: document.title,
+                url: url
+            })
+            .catch(error => console.log('Error sharing:', error));
+        } else {
+            // Fallback for browsers that don't support Web Share API
+            navigator.clipboard.writeText(url)
+                .then(() => {
+                    alert('Link copied to clipboard!');
+                })
+                .catch(error => console.log('Error copying to clipboard:', error));
+        }
+    }
+</script>
+{% endblock %} 

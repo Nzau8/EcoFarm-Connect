@@ -4,7 +4,8 @@ from django.db.models import Sum
 from .models import (
     Category, Course, Lesson, Comment, Testimonial,
     User, Product, Order, DeliveryEarning, BodaRider,
-    Seller, Buyer, Article, Discussion, Withdrawal
+    Seller, Buyer, Article, Discussion, Withdrawal,
+    CourseEnrollment
 )
 
 class CustomAdminSite(admin.AdminSite):
@@ -25,20 +26,23 @@ custom_admin_site = CustomAdminSite(name='custom_admin')
 
 @admin.register(Category, site=custom_admin_site)
 class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)
+    list_display = ('name', 'get_courses_count')
     search_fields = ('name',)
+
+    def get_courses_count(self, obj):
+        return obj.courses.count()
+    get_courses_count.short_description = 'Number of Courses'
 
 @admin.register(Course, site=custom_admin_site)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ('title', 'category', 'instructor', 'level', 'created_at_display')
-    list_filter = ('category', 'level')
-    search_fields = ('title', 'instructor__username')
-
-    def created_at_display(self, obj):
-        if hasattr(obj, 'created_at') and obj.created_at:
-            return obj.created_at.strftime('%Y-%m-%d %H:%M')
-        return "N/A"
-    created_at_display.short_description = 'Created At'
+    list_display = ['title', 'category', 'instructor', 'level', 'duration', 'created_at']
+    list_filter = ['category', 'level', 'created_at']
+    search_fields = ['title', 'description', 'instructor__username']
+    readonly_fields = ['created_at']
+    date_hierarchy = 'created_at'
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('category', 'instructor')
 
 @admin.register(Product, site=custom_admin_site)
 class ProductAdmin(admin.ModelAdmin):
@@ -92,9 +96,10 @@ class WithdrawalAdmin(admin.ModelAdmin):
     list_display = ('rider', 'amount', 'status', 'created_at')
     list_filter = ('status',)
     search_fields = ('rider__user__username', 'transaction_id')
-class CourseAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'some_field', 'another_field', 'created_at_display')
 
-    def created_at_display(self, obj):
-        return obj.created_at  # Ensure that Course actually has a created_at field.
-    created_at_display.short_description = 'Created At'
+@admin.register(CourseEnrollment, site=custom_admin_site)
+class CourseEnrollmentAdmin(admin.ModelAdmin):
+    list_display = ['user', 'course', 'enrolled_at', 'completed', 'progress']
+    list_filter = ['completed', 'enrolled_at']
+    search_fields = ['user__username', 'course__title']
+    readonly_fields = ['enrolled_at']

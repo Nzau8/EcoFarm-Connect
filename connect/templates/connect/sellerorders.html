@@ -1,4 +1,5 @@
-{% extends "layout.html" %}
+{% extends "connect/base.html" %}
+
 {% block content %}
 <div class="container mt-4">
   <h3>Manage Your Orders</h3>
@@ -27,118 +28,77 @@
                 <th>Product</th>
                 <th>Quantity</th>
                 <th>Total</th>
+                <th>Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {% for order in pending_orders %}
               <tr>
-                <td>{{ forloop.counter }}</td>
+                <td>{{ order.id }}</td>
                 <td>{{ order.buyer.username }}</td>
                 <td>{{ order.product.name }}</td>
                 <td>{{ order.quantity }}</td>
-                <td>${{ order.total_price }}</td>
+                <td>KES {{ order.total_price }}</td>
+                <td>{{ order.created_at|date:"M d, Y" }}</td>
                 <td>
-                  <a href="{% url 'order_details' order.id %}" class="btn btn-info btn-sm">Details</a>
-                  <a href="{% url 'update_order_status' order.id 'in_transit' %}" class="btn btn-success btn-sm">Mark as In Transit</a>
+                  <a href="{% url 'connect:seller_order_detail' order.id %}" class="btn btn-sm btn-info">Details</a>
+                  <button class="btn btn-sm btn-success" onclick="acceptOrder({{ order.id }})">Accept</button>
+                  <button class="btn btn-sm btn-danger" onclick="rejectOrder({{ order.id }})">Reject</button>
                 </td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
           {% else %}
-          <p>No pending orders at the moment.</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- In Transit Orders -->
-    <div class="card">
-      <div class="card-header" id="inTransitOrdersHeading">
-        <h5 class="mb-0">
-          <button class="btn btn-link text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#inTransitOrders" aria-expanded="false" aria-controls="inTransitOrders">
-            In Transit Orders ({{ in_transit_orders|length }})
-          </button>
-        </h5>
-      </div>
-      <div id="inTransitOrders" class="collapse" aria-labelledby="inTransitOrdersHeading" data-parent="#ordersAccordion">
-        <div class="card-body">
-          {% if in_transit_orders %}
-          <table class="table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Buyer</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Total</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for order in in_transit_orders %}
-              <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ order.buyer.username }}</td>
-                <td>{{ order.product.name }}</td>
-                <td>{{ order.quantity }}</td>
-                <td>${{ order.total_price }}</td>
-                <td>
-                  <a href="{% url 'order_details' order.id %}" class="btn btn-info btn-sm">Details</a>
-                  <a href="{% url 'update_order_status' order.id 'delivered' %}" class="btn btn-success btn-sm">Mark as Delivered</a>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-          <p>No in-transit orders at the moment.</p>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <!-- Delivered Orders -->
-    <div class="card">
-      <div class="card-header" id="deliveredOrdersHeading">
-        <h5 class="mb-0">
-          <button class="btn btn-link text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#deliveredOrders" aria-expanded="false" aria-controls="deliveredOrders">
-            Delivered Orders ({{ delivered_orders|length }})
-          </button>
-        </h5>
-      </div>
-      <div id="deliveredOrders" class="collapse" aria-labelledby="deliveredOrdersHeading" data-parent="#ordersAccordion">
-        <div class="card-body">
-          {% if delivered_orders %}
-          <table class="table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Buyer</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for order in delivered_orders %}
-              <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ order.buyer.username }}</td>
-                <td>{{ order.product.name }}</td>
-                <td>{{ order.quantity }}</td>
-                <td>${{ order.total_price }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-          {% else %}
-          <p>No delivered orders at the moment.</p>
+          <p>No pending orders.</p>
           {% endif %}
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Return to Dashboard -->
+  <div class="mt-4">
+    <a href="{% url 'connect:sellerdashboard' %}" class="btn btn-outline-secondary">Back to Dashboard</a>
+  </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function acceptOrder(orderId) {
+  if (confirm('Are you sure you want to accept this order?')) {
+    fetch(`{% url 'connect:accept_order' %}${orderId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      }
+    });
+  }
+}
+
+function rejectOrder(orderId) {
+  if (confirm('Are you sure you want to reject this order?')) {
+    fetch(`{% url 'connect:reject_order' %}${orderId}/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        location.reload();
+      }
+    });
+  }
+}
+</script>
 {% endblock %}

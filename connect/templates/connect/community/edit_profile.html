@@ -1,0 +1,101 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+
+{% block community_content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Edit Profile</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.profile_picture.id_for_label }}" class="form-label">Profile Picture</label>
+                            {% if profile.profile_picture %}
+                                <div class="current-picture mb-2">
+                                    <img src="{{ profile.profile_picture.url }}" alt="Current profile picture" 
+                                         class="rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                                </div>
+                            {% endif %}
+                            {{ form.profile_picture }}
+                            {% if form.profile_picture.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.profile_picture.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label>
+                            {{ form.bio }}
+                            {% if form.bio.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.bio.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Tell others about yourself</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.location.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.website.id_for_label }}" class="form-label">Website</label>
+                            {{ form.website }}
+                            {% if form.website.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.website.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">Your personal or business website (optional)</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a href="{% url 'connect:profile' username=user.username %}" 
+                               class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+    }
+    
+    .current-picture {
+        position: relative;
+    }
+    
+    .current-picture img {
+        border: 2px solid var(--bs-primary);
+    }
+</style>
+{% endblock %} 

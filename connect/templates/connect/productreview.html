@@ -1,45 +1,83 @@
-{% extends "layout.html" %}
+{% extends 'connect/base.html' %}
+{% load static %}
+
 {% block content %}
-<div class="container mt-4">
-  <h3>Leave a Review for {{ order.id }}</h3>
-  <p>Share your experience with the products you purchased.</p>
+<div class="container py-4">
+    <h2>Review Your Purchase</h2>
 
-  <form method="POST" action="{% url 'submit_review' order.id %}">
-    {% csrf_token %}
-    
-    <!-- Product Review Form -->
-    <div class="mb-3">
-      <label for="product" class="form-label">Select Product</label>
-      <select class="form-select" id="product" name="product" required>
-        <option value="" disabled selected>Select a product</option>
-        {% for item in order.items %}
-        <option value="{{ item.product.id }}">{{ item.product.name }}</option>
+    <div class="row">
+        {% for item in order.items.all %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{{ item.product.name }}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{% url 'connect:submit_product_review' order.id item.product.id %}">
+                        {% csrf_token %}
+                        
+                        <!-- Rating -->
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <div class="rating">
+                                {% for i in "12345" %}
+                                <input type="radio" name="rating" value="{{ i }}" id="star{{ i }}_{{ item.product.id }}" required>
+                                <label for="star{{ i }}_{{ item.product.id }}">☆</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Review -->
+                        <div class="mb-3">
+                            <label for="review_{{ item.product.id }}" class="form-label">Your Review</label>
+                            <textarea class="form-control" id="review_{{ item.product.id }}" 
+                                      name="review" rows="3" required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-      </select>
     </div>
 
-    <div class="mb-3">
-      <label for="rating" class="form-label">Rating</label>
-      <select class="form-select" id="rating" name="rating" required>
-        <option value="" disabled selected>Choose a rating</option>
-        <option value="1">1 - Poor</option>
-        <option value="2">2 - Fair</option>
-        <option value="3">3 - Good</option>
-        <option value="4">4 - Very Good</option>
-        <option value="5">5 - Excellent</option>
-      </select>
+    <div class="text-center mt-4">
+        <a href="{% url 'connect:order_details' order.id %}" class="btn btn-outline-secondary">
+            Back to Order Details
+        </a>
     </div>
-
-    <div class="mb-3">
-      <label for="comment" class="form-label">Your Comment</label>
-      <textarea class="form-control" id="comment" name="comment" rows="4" required></textarea>
-    </div>
-
-    <button type="submit" class="btn btn-success">Submit Review</button>
-  </form>
-
-  <div class="mt-4">
-    <a href="{% url 'order_history' %}" class="btn btn-outline-success">Back to Order History</a>
-  </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.rating {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.rating input {
+    display: none;
+}
+
+.rating label {
+    font-size: 30px;
+    color: #ddd;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.rating label:hover,
+.rating label:hover ~ label,
+.rating input:checked ~ label {
+    color: #ffc107;
+}
+
+.rating label:hover,
+.rating label:hover ~ label {
+    color: #ffc107;
+}
+</style>
 {% endblock %}

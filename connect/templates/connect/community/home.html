@@ -1,0 +1,980 @@
+{% extends 'connect/community/base_community.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block community_content %}
+<div class="posts-container">
+    {% if messages %}
+    <div class="messages mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for post in posts %}
+    <div class="post-card" id="post-{{ post.id }}">
+        <!-- Post Header -->
+        <div class="post-header">
+            <div class="post-author">
+                {% if post.author.profile.profile_picture %}
+                    <img src="{{ post.author.profile.profile_picture.url }}" 
+                         alt="{{ post.author.username }}" 
+                         class="author-avatar">
+                {% else %}
+                    <img src="{% static 'connect/images/default_profile.png' %}" 
+                         alt="{{ post.author.username }}" 
+                         class="author-avatar">
+                {% endif %}
+                <div class="author-info">
+                    <a href="{% url 'connect:profile' username=post.author.username %}" 
+                       class="author-name">
+                        {{ post.author.get_full_name|default:post.author.username }}
+                    </a>
+                    {% if post.group %}
+                    <span class="text-muted">
+                        <i class="bi bi-arrow-right"></i>
+                        <a href="{% url 'connect:group_detail' group_id=post.group.id %}" class="group-link">
+                            {{ post.group.name }}
+                        </a>
+                    </span>
+                    {% endif %}
+                    <span class="post-time">{{ post.created_at|timesince }} ago</span>
+                </div>
+            </div>
+            <div class="post-actions dropdown">
+                <button class="btn btn-link" data-bs-toggle="dropdown">
+                    <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu">
+                    {% if request.user == post.author %}
+                    <li>
+                        <a class="dropdown-item" href="{% url 'connect:edit_post' post_id=post.id %}">
+                            <i class="bi bi-pencil"></i> Edit Post
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item text-danger" href="#" 
+                           onclick="deletePost({{ post.id }})">
+                            <i class="bi bi-trash"></i> Delete Post
+                        </a>
+                    </li>
+                    {% else %}
+                    <li>
+                        <a class="dropdown-item" href="#" 
+                           onclick="reportContent('post', {{ post.id }})">
+                            <i class="bi bi-flag"></i> Report Post
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Post Content -->
+        <div class="post-content">
+            {% if post.is_poll %}
+            <!-- Poll Content -->
+            <div class="poll-container">
+                <h5>{{ post.poll.question }}</h5>
+                <div class="poll-options">
+                    {% for option in post.poll.options.all %}
+                    <div class="poll-option {% if request.user in option.votes.all %}voted{% endif %}"
+                         onclick="votePoll({{ option.id }})">
+                        <div class="option-text">{{ option.text }}</div>
+                        <div class="vote-bar" style="width: {{ option.get_vote_percentage }}%"></div>
+                        <div class="vote-count">{{ option.get_vote_count }} votes</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="poll-footer">
+                    <small class="text-muted">
+                        Poll ends {{ post.poll.end_date|timeuntil }} from now
+                    </small>
+                </div>
+            </div>
+            {% elif post.is_event %}
+            <!-- Event Content -->
+            <div class="event-preview">
+                <h5>{{ post.content|linebreaksbr }}</h5>
+                <a href="{% url 'connect:event_detail' event_id=post.event.id %}" 
+                   class="btn btn-outline-primary mt-2">
+                    View Event Details
+                </a>
+            </div>
+            {% elif post.is_live_stream %}
+            <!-- Live Stream Content -->
+            <div class="stream-preview">
+                <h5>{{ post.content|linebreaksbr }}</h5>
+                <a href="{% url 'connect:stream_detail' stream_id=post.stream.id %}" 
+                   class="btn btn-outline-danger mt-2">
+                    {% if post.stream.is_live %}
+                    <i class="bi bi-broadcast"></i> Join Live Stream
+                    {% else %}
+                    <i class="bi bi-calendar"></i> Set Reminder
+                    {% endif %}
+                </a>
+            </div>
+            {% else %}
+            <!-- Regular Post Content -->
+            <p class="post-text">{{ post.content|linebreaksbr }}</p>
+            {% if post.media %}
+            <div class="post-media">
+                {% if post.media_type == 'IMAGE' %}
+                <img src="{{ post.media.url }}" alt="Post image" class="img-fluid rounded">
+                {% else %}
+                <video controls class="w-100 rounded">
+                    <source src="{{ post.media.url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+
+            {% if post.hashtags.exists %}
+            <div class="post-hashtags">
+                {% for hashtag in post.hashtags.all %}
+                <a href="{% url 'connect:hashtag' name=hashtag.name %}" class="hashtag-link">
+                    #{{ hashtag.name }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if post.linked_products.exists %}
+            <div class="linked-products">
+                <h6>Featured Products:</h6>
+                <div class="products-grid">
+                    {% for product in post.linked_products.all %}
+                    <div class="product-card">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                        <div class="product-info">
+                            <h6>{{ product.name }}</h6>
+                            <p class="price">KES {{ product.price }}</p>
+                            <a href="{% url 'connect:product_detail' product_id=product.id %}" 
+                               class="btn btn-sm btn-outline-primary">
+                                View Product
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Post Footer -->
+        <div class="post-footer">
+            <!-- Reactions Summary -->
+            <div class="reactions-summary">
+                <div class="reactions-icons">
+                    <div class="current-reactions">
+                        {% for reaction in post.get_reactions %}
+                        <span class="reaction-icon reaction-{{ reaction.type|lower }} {% if reaction.type == post.get_user_reaction %}active{% endif %}"
+                              data-bs-toggle="tooltip" 
+                              data-bs-placement="top"
+                              title="{{ reaction.count }} {{ reaction.type|title }}">
+                            {{ reaction.type|reaction_icon }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <span class="reactions-count">
+                    {{ post.total_reactions }} reactions
+                </span>
+                <span class="comments-count ms-3">
+                    <i class="bi bi-chat-dots"></i>
+                    {{ post.comments.count }} comments
+                </span>
+            </div>
+
+            <!-- Interaction Buttons -->
+            <div class="interaction-buttons">
+                <div class="btn-group reaction-buttons" role="group">
+                    <button type="button" 
+                            class="btn btn-light reaction-button {% if post.user_has_reacted %}active{% endif %}"
+                            data-bs-toggle="dropdown">
+                        <i class="bi bi-emoji-smile"></i> React
+                    </button>
+                    <div class="dropdown-menu reaction-menu">
+                        <div class="reaction-options">
+                            <button class="reaction-option" onclick="react({{ post.id }}, 'LIKE')" title="Like">
+                                <i class="bi bi-hand-thumbs-up-fill"></i>
+                            </button>
+                            <button class="reaction-option" onclick="react({{ post.id }}, 'LOVE')" title="Love">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                            <button class="reaction-option" onclick="react({{ post.id }}, 'HAHA')" title="Haha">
+                                <i class="bi bi-emoji-laughing-fill"></i>
+                            </button>
+                            <button class="reaction-option" onclick="react({{ post.id }}, 'WOW')" title="Wow">
+                                <i class="bi bi-emoji-surprise-fill"></i>
+                            </button>
+                            <button class="reaction-option" onclick="react({{ post.id }}, 'SAD')" title="Sad">
+                                <i class="bi bi-emoji-frown-fill"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-light" onclick="focusComment({{ post.id }})">
+                    <i class="bi bi-chat-dots"></i> Comment
+                </button>
+                <button class="btn btn-light" onclick="sharePost({{ post.id }})">
+                    <i class="bi bi-share"></i> Share
+                </button>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section mt-3">
+                <div class="comment-form mb-3">
+                    <form onsubmit="submitComment(event, {{ post.id }})" class="d-flex">
+                        <img src="{% if request.user.profile.profile_picture %}{{ request.user.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                             alt="{{ request.user.username }}" 
+                             class="comment-avatar">
+                        <div class="flex-grow-1">
+                            <div class="d-flex gap-2 align-items-start">
+                                <textarea class="form-control" 
+                                          name="content"
+                                          rows="1" 
+                                          placeholder="Write a comment..."
+                                          oninput="autoResize(this)"></textarea>
+                                <button type="submit" class="btn btn-primary px-3 py-2">
+                                    <i class="bi bi-send fs-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <input type="hidden" name="parent_id" value="">
+                    </form>
+                </div>
+
+                <div class="comments-list" id="comments-{{ post.id }}">
+                    {% for comment in post.comments.all|slice:":3" %}
+                        {% if not comment.parent %}
+                        <div class="comment-thread">
+                            <div class="comment-item" id="comment-{{ comment.id }}">
+                                <img src="{% if comment.author.profile.profile_picture %}{{ comment.author.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                     alt="{{ comment.author.username }}" 
+                                     class="comment-avatar">
+                                <div class="comment-content">
+                                    <div class="comment-header">
+                                        <a href="{% url 'connect:profile' username=comment.author.username %}" 
+                                           class="comment-author">
+                                            {{ comment.author.get_full_name|default:comment.author.username }}
+                                        </a>
+                                        <span class="comment-time">{{ comment.created_at|timesince }} ago</span>
+                                    </div>
+                                    <p class="comment-text">{{ comment.content }}</p>
+                                    <div class="comment-actions">
+                                        <button class="btn btn-link btn-sm" onclick="likeComment({{ comment.id }})">
+                                            <i class="bi bi-hand-thumbs-up{% if comment.is_liked_by_user %}-fill{% endif %}"></i>
+                                            Like
+                                        </button>
+                                        <button class="btn btn-link btn-sm" onclick="showReplyForm({{ comment.id }})">
+                                            Reply
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Nested Reply Form -->
+                                    <div class="reply-form d-none" id="reply-form-{{ comment.id }}">
+                                        <form onsubmit="submitComment(event, {{ post.id }}, {{ comment.id }})" class="d-flex mt-2">
+                                            <img src="{% if request.user.profile.profile_picture %}{{ request.user.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                                 alt="{{ request.user.username }}" 
+                                                 class="comment-avatar comment-avatar-sm">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex gap-2 align-items-start">
+                                                    <textarea class="form-control" 
+                                                              name="content"
+                                                              rows="1" 
+                                                              placeholder="Write a reply..."
+                                                              oninput="autoResize(this)"></textarea>
+                                                    <button type="submit" class="btn btn-primary px-3 py-2">
+                                                        <i class="bi bi-send fs-5"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Nested Replies -->
+                                    <div class="replies-list" id="replies-{{ comment.id }}">
+                                        {% for reply in comment.get_replies %}
+                                        <div class="comment-item reply" id="comment-{{ reply.id }}">
+                                            <img src="{% if reply.author.profile.profile_picture %}{{ reply.author.profile.profile_picture.url }}{% else %}{% static 'connect/images/default_profile.png' %}{% endif %}" 
+                                                 alt="{{ reply.author.username }}" 
+                                                 class="comment-avatar comment-avatar-sm">
+                                            <div class="comment-content">
+                                                <div class="comment-header">
+                                                    <a href="{% url 'connect:profile' username=reply.author.username %}" 
+                                                       class="comment-author">
+                                                        {{ reply.author.get_full_name|default:reply.author.username }}
+                                                    </a>
+                                                    <span class="comment-time">{{ reply.created_at|timesince }} ago</span>
+                                                </div>
+                                                <p class="comment-text">{{ reply.content }}</p>
+                                                <div class="comment-actions">
+                                                    <button class="btn btn-link btn-sm" onclick="likeComment({{ reply.id }})">
+                                                        <i class="bi bi-hand-thumbs-up{% if reply.is_liked_by_user %}-fill{% endif %}"></i>
+                                                        Like
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if post.comments.count > 3 %}
+                    <button class="btn btn-link view-more-comments" 
+                            onclick="loadMoreComments({{ post.id }})">
+                        View more comments ({{ post.comments.count|add:"-3" }} more)
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="no-posts">
+        <i class="bi bi-newspaper"></i>
+        <h5>No Posts Yet</h5>
+        <p>Follow more users or join groups to see their posts here!</p>
+    </div>
+    {% endfor %}
+
+    {% if posts.has_other_pages %}
+    <div class="pagination justify-content-center mt-4">
+        <ul class="pagination">
+            {% if posts.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ posts.previous_page_number }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for num in posts.paginator.page_range %}
+            {% if posts.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% else %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if posts.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ posts.next_page_number }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .posts-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .post-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .post-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .post-author {
+        display: flex;
+        align-items: center;
+    }
+
+    .author-avatar, .comment-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 1rem;
+        object-fit: cover;
+    }
+
+    .author-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .author-name {
+        font-weight: 600;
+        color: #333;
+        text-decoration: none;
+    }
+
+    .post-time, .comment-time {
+        font-size: 0.85rem;
+        color: #666;
+    }
+
+    .post-content {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        line-height: 1.5;
+    }
+
+    .post-text {
+        white-space: pre-line;
+        margin-bottom: 1rem;
+    }
+
+    .post-media {
+        margin-bottom: 1rem;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .post-hashtags {
+        margin-bottom: 1rem;
+    }
+
+    .post-footer {
+        border-top: 1px solid #dee2e6;
+        padding-top: 1rem;
+    }
+
+    .reactions-summary {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+        margin-bottom: 0.5rem;
+    }
+
+    .reactions-icons {
+        display: flex;
+        align-items: center;
+    }
+
+    .reaction-icon {
+        font-size: 1.2rem;
+        margin-right: 0.3rem;
+        cursor: pointer;
+    }
+
+    .reaction-icon.active {
+        transform: scale(1.2);
+    }
+
+    .reaction-LIKE { color: #2078f4; }
+    .reaction-LOVE { color: #f41f4d; }
+    .reaction-HAHA { color: #f7b125; }
+    .reaction-WOW { color: #f7b125; }
+    .reaction-SAD { color: #f7b125; }
+
+    .interaction-buttons {
+        display: flex;
+        gap: 0.5rem;
+        padding: 0.5rem 0;
+    }
+
+    .reaction-menu {
+        padding: 0.5rem;
+        min-width: 250px;
+    }
+
+    .reaction-options {
+        display: flex;
+        justify-content: space-around;
+    }
+
+    .reaction-option {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .reaction-option:hover {
+        transform: scale(1.2);
+    }
+
+    .comments-section {
+        margin-top: 1rem;
+    }
+
+    .comment-form {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .comment-form textarea {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        resize: none;
+        transition: height 0.2s ease;
+    }
+
+    .comment-item {
+        display: flex;
+        margin-bottom: 1rem;
+    }
+
+    .comment-content {
+        background-color: #f8f9fa;
+        border-radius: 15px;
+        padding: 0.8rem 1rem;
+        flex: 1;
+    }
+
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.3rem;
+    }
+
+    .comment-author {
+        font-weight: 600;
+        color: #333;
+        text-decoration: none;
+    }
+
+    .comment-text {
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .view-more-comments {
+        color: #666;
+        text-decoration: none;
+        padding: 0.5rem;
+        text-align: center;
+        width: 100%;
+    }
+
+    .view-more-comments:hover {
+        background-color: #f8f9fa;
+    }
+
+    .poll-container {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .poll-option {
+        position: relative;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        overflow: hidden;
+    }
+
+    .vote-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: rgba(40, 167, 69, 0.1);
+        z-index: 0;
+        transition: width 0.3s ease;
+    }
+
+    .option-text {
+        position: relative;
+        z-index: 1;
+    }
+
+    .vote-count {
+        position: relative;
+        z-index: 1;
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .product-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .product-card img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+    }
+
+    .product-info {
+        padding: 0.5rem;
+    }
+
+    .product-info h6 {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+
+    .price {
+        color: var(--primary);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .no-posts {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .no-posts i {
+        font-size: 3rem;
+        color: #dee2e6;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 576px) {
+        .post-card {
+            padding: 1rem;
+        }
+
+        .interaction-buttons {
+            flex-wrap: wrap;
+        }
+
+        .interaction-buttons button {
+            flex: 1;
+        }
+    }
+
+    .share-dropdown .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .share-dropdown .dropdown-item i {
+        font-size: 1.2rem;
+    }
+
+    .share-dropdown .dropdown-item:hover {
+        background-color: var(--bs-light);
+    }
+
+    .interaction-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .interaction-bar .btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .interaction-bar .btn i {
+        font-size: 1.2rem;
+    }
+
+    .comment-form .btn-primary {
+        min-width: 50px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .comment-form textarea {
+        min-height: 40px;
+    }
+
+    .comment-thread {
+        margin-bottom: 1rem;
+    }
+
+    .comment-item.reply {
+        margin-left: 2rem;
+        margin-top: 0.5rem;
+    }
+
+    .comment-avatar-sm {
+        width: 32px;
+        height: 32px;
+    }
+
+    .replies-list {
+        margin-top: 0.5rem;
+    }
+
+    .reply-form textarea {
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function autoResize(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+        
+        const actions = textarea.parentElement.querySelector('.comment-actions');
+        if (textarea.value.length > 0) {
+            actions.classList.remove('d-none');
+        } else {
+            actions.classList.add('d-none');
+        }
+    }
+
+    function cancelComment(button) {
+        const form = button.closest('form');
+        const textarea = form.querySelector('textarea');
+        textarea.value = '';
+        textarea.style.height = 'auto';
+        button.closest('.comment-actions').classList.add('d-none');
+    }
+
+    function react(postId, reactionType) {
+        fetch(`/community/post/${postId}/react/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                reaction_type: reactionType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Update reaction counts
+            const reactionsContainer = document.querySelector(`#post-${postId} .current-reactions`);
+            const reactionsCount = document.querySelector(`#post-${postId} .reactions-count`);
+            
+            // Update reaction icons
+            reactionsContainer.innerHTML = '';
+            Object.entries(data.reaction_counts).forEach(([type, count]) => {
+                if (count > 0) {
+                    const span = document.createElement('span');
+                    span.className = `reaction-icon reaction-${type.toLowerCase()} ${data.action === 'added' && type === reactionType ? 'active' : ''}`;
+                    span.setAttribute('data-bs-toggle', 'tooltip');
+                    span.setAttribute('data-bs-placement', 'top');
+                    span.setAttribute('title', `${count} ${type}`);
+                    span.innerHTML = getReactionIcon(type);
+                    reactionsContainer.appendChild(span);
+                }
+            });
+            
+            // Update total reactions count
+            const totalReactions = Object.values(data.reaction_counts).reduce((a, b) => a + b, 0);
+            reactionsCount.textContent = `${totalReactions} reactions`;
+            
+            // Reinitialize tooltips
+            const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltips.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function getReactionIcon(type) {
+        const icons = {
+            'LIKE': '<i class="bi bi-hand-thumbs-up-fill"></i>',
+            'LOVE': '<i class="bi bi-heart-fill"></i>',
+            'HAHA': '<i class="bi bi-emoji-laughing-fill"></i>',
+            'WOW': '<i class="bi bi-emoji-surprise-fill"></i>',
+            'SAD': '<i class="bi bi-emoji-frown-fill"></i>'
+        };
+        return icons[type] || icons['LIKE'];
+    }
+
+    function showReplyForm(commentId) {
+        const replyForm = document.getElementById(`reply-form-${commentId}`);
+        replyForm.classList.toggle('d-none');
+        if (!replyForm.classList.contains('d-none')) {
+            replyForm.querySelector('textarea').focus();
+        }
+    }
+
+    function submitComment(event, postId, parentId = null) {
+        event.preventDefault();
+        const form = event.target;
+        const textarea = form.querySelector('textarea');
+        const content = textarea.value.trim();
+        
+        if (!content) return;
+        
+        fetch(`/community/post/${postId}/comment/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ 
+                content: content,
+                parent_id: parentId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Create comment HTML
+                const commentHtml = createCommentHtml(data.comment);
+                
+                if (parentId) {
+                    // Add reply to the replies list
+                    const repliesList = document.getElementById(`replies-${parentId}`);
+                    repliesList.insertAdjacentHTML('beforeend', commentHtml);
+                    
+                    // Hide reply form
+                    document.getElementById(`reply-form-${parentId}`).classList.add('d-none');
+                } else {
+                    // Add comment to the main comments list
+                    const commentsList = document.getElementById(`comments-${postId}`);
+                    const firstComment = commentsList.firstChild;
+                    if (firstComment) {
+                        firstComment.insertAdjacentHTML('beforebegin', commentHtml);
+                    } else {
+                        commentsList.innerHTML = commentHtml;
+                    }
+                }
+                
+                // Update comment count
+                const commentCount = document.querySelector(`#post-${postId} .comments-count`);
+                const currentCount = parseInt(commentCount.textContent.split(' ')[0]) + 1;
+                commentCount.innerHTML = `<i class="bi bi-chat-dots"></i> ${currentCount} comments`;
+                
+                // Clear the textarea
+                textarea.value = '';
+                textarea.style.height = 'auto';
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function createCommentHtml(comment) {
+        const isReply = comment.parent_id !== null;
+        return `
+            <div class="comment-item ${isReply ? 'reply' : ''}" id="comment-${comment.id}">
+                <img src="${comment.author.profile_picture || '/static/connect/images/default_profile.png'}" 
+                     alt="${comment.author.username}" 
+                     class="comment-avatar ${isReply ? 'comment-avatar-sm' : ''}">
+                <div class="comment-content">
+                    <div class="comment-header">
+                        <a href="/community/profile/${comment.author.username}/" 
+                           class="comment-author">
+                            ${comment.author.full_name}
+                        </a>
+                        <span class="comment-time">${comment.created_at}</span>
+                    </div>
+                    <p class="comment-text">${comment.content}</p>
+                    <div class="comment-actions">
+                        <button class="btn btn-link btn-sm" onclick="likeComment(${comment.id})">
+                            <i class="bi bi-hand-thumbs-up"></i> Like
+                        </button>
+                        ${!isReply ? `
+                        <button class="btn btn-link btn-sm" onclick="showReplyForm(${comment.id})">
+                            Reply
+                        </button>
+                        ` : ''}
+                    </div>
+                    ${!isReply ? `
+                    <div class="reply-form d-none" id="reply-form-${comment.id}">
+                        <form onsubmit="submitComment(event, ${comment.post_id}, ${comment.id})" class="d-flex mt-2">
+                            <img src="${comment.author.profile_picture || '/static/connect/images/default_profile.png'}" 
+                                 alt="${comment.author.username}" 
+                                 class="comment-avatar comment-avatar-sm">
+                            <div class="flex-grow-1">
+                                <div class="d-flex gap-2 align-items-start">
+                                    <textarea class="form-control" 
+                                              name="content"
+                                              rows="1" 
+                                              placeholder="Write a reply..."
+                                              oninput="autoResize(this)"></textarea>
+                                    <button type="submit" class="btn btn-primary px-3 py-2">
+                                        <i class="bi bi-send fs-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="replies-list" id="replies-${comment.id}"></div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    function focusComment(postId) {
+        const textarea = document.querySelector(`#post-${postId} .comment-form textarea`);
+        if (textarea) {
+            textarea.focus();
+            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        const tooltips = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltips.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %} 

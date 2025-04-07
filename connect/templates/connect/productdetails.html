@@ -9,13 +9,8 @@
     <!-- Product Images -->
     <div class="col-md-6">
       {% if product.image %}
-        <!-- Debug info -->
-        <p>Image URL: {{ product.image.url }}</p>
-        <p>Image Path: {{ product.image.path }}</p>
-        
         <img src="{{ product.image.url }}" alt="{{ product.name }}" class="img-fluid rounded">
       {% else %}
-        <p>No image available</p>
         <img src="{% static 'connect/images/default-product.jpg' %}" alt="Default product image" class="img-fluid rounded">
       {% endif %}
     </div>
